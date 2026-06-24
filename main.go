@@ -19,6 +19,7 @@ import (
 
 type Metrics struct {
 	ClientIp            string   `json:"client_ip"`
+	ServerHostname      string   `json:"server_hostname"`
 	ServerIp            string   `json:"server_ip"`
 	StartTime           string   `json:"start_time"`
 	DnsLookupSeconds    string   `json:"dns_lookup_seconds"`
@@ -349,6 +350,7 @@ func main() {
 	metrics := Metrics{
 		ClientIp:            clientIP,
 		StartTime:           startTime.Format("Mon Jan 2 15:04:05 MST 2006"),
+		ServerHostname:      hostname,
 		ServerIp:            remoteIP,
 		DnsLookupSeconds:    fmt.Sprintf("%.6f", timeDNS),
 		TcpConnectSeconds:   fmt.Sprintf("%.6f", timeConnect),
