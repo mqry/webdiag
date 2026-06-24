@@ -29,11 +29,15 @@ type Metrics struct {
 	TotalConnectSeconds string   `json:"total_connect_seconds"`
 	HttpStatus          string   `json:"http_status"`
 	RedirectUrl         string   `json:"redirect_url,omitempty"`
+	TlsVersion          string   `json:"tls_version,omitempty"`
+	CipherSuite         string   `json:"cipher_suite,omitempty"`
 	Warnings            []string `json:"warnings,omitempty"`
 	Error               string   `json:"error"`
 }
 
 var globalWarnings []string
+var establishedTLSVersion string
+var establishedCipherSuite string
 
 func getLocalPrivateIP(isIPv6 bool) string {
 	addrs, err := net.InterfaceAddrs()
@@ -103,6 +107,10 @@ func main() {
 	}
 	hostname := os.Args[1]
 	url := "https://" + hostname
+
+	globalWarnings = []string{}
+	establishedTLSVersion = ""
+	establishedCipherSuite = ""
 
 	var dnsEnd, connectEnd, tlsEnd, wroteRequestTime, firstByteTime time.Time
 	var remoteIP string
@@ -186,6 +194,23 @@ func main() {
 			}
 
 			state := tlsConn.ConnectionState()
+
+			// Record TLS Version
+			switch state.Version {
+			case tls.VersionTLS10:
+				establishedTLSVersion = "TLS 1.0"
+			case tls.VersionTLS11:
+				establishedTLSVersion = "TLS 1.1"
+			case tls.VersionTLS12:
+				establishedTLSVersion = "TLS 1.2"
+			case tls.VersionTLS13:
+				establishedTLSVersion = "TLS 1.3"
+			default:
+				establishedTLSVersion = fmt.Sprintf("Unknown (0x%04X)", state.Version)
+			}
+
+			// Record Cipher Suite
+			establishedCipherSuite = tls.CipherSuiteName(state.CipherSuite)
 
 			// 1. Check TLS Version
 			if state.Version == tls.VersionTLS10 || state.Version == tls.VersionTLS11 {
@@ -333,6 +358,8 @@ func main() {
 		TotalConnectSeconds: fmt.Sprintf("%.6f", totalTime.Seconds()),
 		HttpStatus:          statusCode,
 		RedirectUrl:         redirectLocation,
+		TlsVersion:          establishedTLSVersion,
+		CipherSuite:         establishedCipherSuite,
 		Warnings:            globalWarnings,
 		Error:               errMsg,
 	}
