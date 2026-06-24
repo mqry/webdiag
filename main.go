@@ -32,6 +32,7 @@ type Metrics struct {
 	RedirectUrl         string   `json:"redirect_url,omitempty"`
 	TlsVersion          string   `json:"tls_version,omitempty"`
 	CipherSuite         string   `json:"cipher_suite,omitempty"`
+	CertExpiryDate      string   `json:"cert_expiry_date,omitempty"`
 	Warnings            []string `json:"warnings,omitempty"`
 	Error               string   `json:"error"`
 }
@@ -39,6 +40,7 @@ type Metrics struct {
 var globalWarnings []string
 var establishedTLSVersion string
 var establishedCipherSuite string
+var certExpiryStr string
 
 func getLocalPrivateIP(isIPv6 bool) string {
 	addrs, err := net.InterfaceAddrs()
@@ -112,6 +114,7 @@ func main() {
 	globalWarnings = []string{}
 	establishedTLSVersion = ""
 	establishedCipherSuite = ""
+	certExpiryStr = ""
 
 	var dnsEnd, connectEnd, tlsEnd, wroteRequestTime, firstByteTime time.Time
 	var remoteIP string
@@ -240,6 +243,13 @@ func main() {
 			// 3. Verify Certificate
 			if len(state.PeerCertificates) > 0 {
 				leafCert := state.PeerCertificates[0]
+				certExpiryStr = leafCert.NotAfter.Format("2006-01-02 15:04:05 UTC")
+
+				daysLeft := time.Until(leafCert.NotAfter).Hours() / 24.0
+				if daysLeft <= 7.0 && daysLeft > 0 {
+					globalWarnings = append(globalWarnings, fmt.Sprintf("Certificate will expire %.1f days left (%s)", daysLeft, certExpiryStr))
+				}
+
 				opts := x509.VerifyOptions{
 					DNSName:       host,
 					Intermediates: x509.NewCertPool(),
@@ -362,6 +372,7 @@ func main() {
 		RedirectUrl:         redirectLocation,
 		TlsVersion:          establishedTLSVersion,
 		CipherSuite:         establishedCipherSuite,
+		CertExpiryDate:      certExpiryStr,
 		Warnings:            globalWarnings,
 		Error:               errMsg,
 	}
