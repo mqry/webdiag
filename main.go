@@ -76,14 +76,9 @@ func main() {
 		return
 	}
 	url := os.Args[1]
-	if strings.Contains(url, "https://") {
-		hostname = strings.TrimPrefix(url, "https://")
-	} else if strings.Contains(hostname, "http://") {
-		hostname = strings.TrimPrefix(url, "http://")
-	} else {
-		hostname = url
+	if !strings.Contains(url, "https://") && !strings.Contains(url, "http://") {
+		url = "https://" + url
 	}
-
 	globalWarnings = []string{}
 	establishedTLSVersion = ""
 	establishedCipherSuite = ""
