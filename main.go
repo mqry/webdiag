@@ -110,6 +110,13 @@ func main() {
 	}
 	hostname := os.Args[1]
 	url := "https://" + hostname
+	if strings.Contains(hostname, "https://") {
+		url = hostname
+		hostname = strings.TrimPrefix(url, "https://")
+	} else if strings.Contains(hostname, "http://") {
+		url = hostname
+		hostname = strings.TrimPrefix(url, "http://")
+	}
 
 	globalWarnings = []string{}
 	establishedTLSVersion = ""
