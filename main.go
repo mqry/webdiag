@@ -18,22 +18,22 @@ import (
 )
 
 type Metrics struct {
-	ServerHostname      string   `json:"server_hostname"`
-	ServerIp            string   `json:"server_ip"`
-	StartTime           string   `json:"start_time"`
-	DnsLookupSeconds    string   `json:"dns_lookup_seconds"`
-	TcpConnectSeconds   string   `json:"tcp_connect_seconds"`
-	TlsConnectSeconds   string   `json:"tls_connect_seconds"`
-	RequestSentSeconds  string   `json:"request_sent_seconds"`
-	TtfbReachedSeconds  string   `json:"ttfb_reached_seconds"`
-	TotalConnectSeconds string   `json:"total_connect_seconds"`
-	HttpStatus          string   `json:"http_status"`
-	RedirectUrl         string   `json:"redirect_url,omitempty"`
-	TlsVersion          string   `json:"tls_version,omitempty"`
-	CipherSuite         string   `json:"cipher_suite,omitempty"`
-	CertExpiryDate      string   `json:"cert_expiry_date,omitempty"`
-	Warnings            []string `json:"warnings,omitempty"`
-	Error               string   `json:"error"`
+	ServerHostname   string   `json:"server_hostname"`
+	ServerIp         string   `json:"server_ip"`
+	StartTime        string   `json:"start_time"`
+	DnsLookupMsec    string   `json:"dns_lookup_msec"`
+	TcpConnectMsec   string   `json:"tcp_connect_msec"`
+	TlsConnectMsec   string   `json:"tls_connect_msec"`
+	RequestSentMsec  string   `json:"request_sent_msec"`
+	TtfbReachedMsec  string   `json:"ttfb_reached_msec"`
+	TotalConnectMsec string   `json:"total_connect_msec"`
+	HttpStatus       string   `json:"http_status"`
+	RedirectUrl      string   `json:"redirect_url,omitempty"`
+	TlsVersion       string   `json:"tls_version,omitempty"`
+	CipherSuite      string   `json:"cipher_suite,omitempty"`
+	CertExpiryDate   string   `json:"cert_expiry_date,omitempty"`
+	Warnings         []string `json:"warnings,omitempty"`
+	Error            string   `json:"error"`
 }
 
 var globalWarnings []string
@@ -249,54 +249,54 @@ func main() {
 
 	totalTime := time.Since(startTime)
 
-	var timeDNS float64
+	var timeDNS int64
 	if !dnsEnd.IsZero() {
-		timeDNS = dnsEnd.Sub(startTime).Seconds()
+		timeDNS = dnsEnd.Sub(startTime).Milliseconds()
 	}
 
-	var timeConnect float64
+	var timeConnect int64
 	if !connectEnd.IsZero() {
-		timeConnect = connectEnd.Sub(startTime).Seconds()
+		timeConnect = connectEnd.Sub(startTime).Milliseconds() - timeDNS
 	}
 
-	var timeTLS float64
+	var timeTLS int64
 	if !tlsEnd.IsZero() {
-		timeTLS = tlsEnd.Sub(startTime).Seconds()
+		timeTLS = tlsEnd.Sub(startTime).Milliseconds() - (timeDNS + timeConnect)
 	} else {
-		timeTLS = timeConnect
+		timeTLS = 0
 	}
 
-	var timePretransfer float64
+	var timePretransfer int64
 	if !wroteRequestTime.IsZero() {
-		timePretransfer = wroteRequestTime.Sub(startTime).Seconds()
+		timePretransfer = wroteRequestTime.Sub(startTime).Milliseconds() - (timeDNS + timeConnect + timeTLS)
 	} else {
-		timePretransfer = timeTLS
+		timePretransfer = 0
 	}
 
-	var timeStartTransfer float64
+	var timeStartTransfer int64
 	if !firstByteTime.IsZero() {
-		timeStartTransfer = firstByteTime.Sub(startTime).Seconds()
+		timeStartTransfer = firstByteTime.Sub(startTime).Milliseconds() - (timeDNS + timeConnect + timeTLS + timePretransfer)
 	} else {
-		timeStartTransfer = timeTLS
+		timeStartTransfer = 0
 	}
 
 	metrics := Metrics{
-		ServerHostname:      hostname,
-		ServerIp:            remoteIP,
-		StartTime:           startTime.Format("Mon Jan 2 15:04:05 MST 2006"),
-		DnsLookupSeconds:    fmt.Sprintf("%.6f", timeDNS),
-		TcpConnectSeconds:   fmt.Sprintf("%.6f", timeConnect),
-		TlsConnectSeconds:   fmt.Sprintf("%.6f", timeTLS),
-		RequestSentSeconds:  fmt.Sprintf("%.6f", timePretransfer),
-		TtfbReachedSeconds:  fmt.Sprintf("%.6f", timeStartTransfer),
-		TotalConnectSeconds: fmt.Sprintf("%.6f", totalTime.Seconds()),
-		HttpStatus:          statusCode,
-		RedirectUrl:         redirectLocation,
-		TlsVersion:          establishedTLSVersion,
-		CipherSuite:         establishedCipherSuite,
-		CertExpiryDate:      certExpiryStr,
-		Warnings:            globalWarnings,
-		Error:               errMsg,
+		ServerHostname:   hostname,
+		ServerIp:         remoteIP,
+		StartTime:        startTime.Format("Mon Jan 2 15:04:05 MST 2006"),
+		DnsLookupMsec:    fmt.Sprintf("%d", timeDNS),
+		TcpConnectMsec:   fmt.Sprintf("%d", timeConnect),
+		TlsConnectMsec:   fmt.Sprintf("%d", timeTLS),
+		RequestSentMsec:  fmt.Sprintf("%d", timePretransfer),
+		TtfbReachedMsec:  fmt.Sprintf("%d", timeStartTransfer),
+		TotalConnectMsec: fmt.Sprintf("%d", totalTime.Milliseconds()),
+		HttpStatus:       statusCode,
+		RedirectUrl:      redirectLocation,
+		TlsVersion:       establishedTLSVersion,
+		CipherSuite:      establishedCipherSuite,
+		CertExpiryDate:   certExpiryStr,
+		Warnings:         globalWarnings,
+		Error:            errMsg,
 	}
 
 	var buf bytes.Buffer
