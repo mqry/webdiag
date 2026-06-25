@@ -217,7 +217,7 @@ func main() {
 				certExpiryStr = leafCert.NotAfter.Format(time.RFC3339)
 
 				daysLeft = int(time.Until(leafCert.NotAfter).Hours() / 24.0)
-				if daysLeft <= 7.0 && daysLeft > 0 {
+				if daysLeft <= 30.0 && daysLeft > 0 {
 					globalWarnings = append(globalWarnings, fmt.Sprintf("certificate will expire %d days left (%s)", daysLeft, certExpiryStr))
 				}
 
