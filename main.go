@@ -12,48 +12,76 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
 
-type Metrics struct {
-	ServerHostname   string   `json:"server_hostname"`
-	ServerIp         string   `json:"server_ip"`
-	StartTime        string   `json:"start_time"`
-	DnsLookupMsec    string   `json:"dns_lookup_msec"`
-	TcpConnectMsec   string   `json:"tcp_connect_msec"`
-	TlsConnectMsec   string   `json:"tls_connect_msec"`
-	RequestSentMsec  string   `json:"request_sent_msec"`
-	TtfbReachedMsec  string   `json:"ttfb_reached_msec"`
-	TotalConnectMsec string   `json:"total_connect_msec"`
-	HttpStatus       string   `json:"http_status"`
-	RedirectUrl      string   `json:"redirect_url,omitempty"`
-	TlsVersion       string   `json:"tls_version,omitempty"`
-	CipherSuite      string   `json:"cipher_suite,omitempty"`
-	CertExpiryDate   string   `json:"cert_expiry_date,omitempty"`
-	Warnings         []string `json:"warnings,omitempty"`
-	Error            string   `json:"error"`
+type Response struct {
+	Site        Site      `json:"site"`
+	StartTime   string    `json:"start_time"`
+	StatusCode  int       `json:"status_code"`
+	RedirectUrl string    `json:"redirect_url,omitempty"`
+	Ok          bool      `json:"ok"`
+	TimingsMs   Timings   `json:"timings_ms"`
+	TLS         TLSConfig `json:"tls"`
+	Message     Message   `json:"message"`
+}
+
+type Site struct {
+	URL string `json:"url"`
+	IP  string `json:"ip"`
+}
+
+type Timings struct {
+	DnsLookup        int `json:"dns_lookup"`
+	TcpConnect       int `json:"tcp_connect"`
+	TlsHandshake     int `json:"tls_handshake"`
+	ServerProcessing int `json:"server_processing"`
+	ContentTransfer  int `json:"content_transfer"`
+	Total            int `json:"total"`
+}
+
+type TLSConfig struct {
+	Version     string      `json:"version"`
+	Cipher      string      `json:"cipher"`
+	Certificate Certificate `json:"certificate"`
+}
+
+type Certificate struct {
+	IsValid       bool   `json:"is_valid"`
+	DaysRemaining int    `json:"days_remaining"`
+	ExpiryDate    string `json:"expiry_date"`
+}
+
+type Message struct {
+	Warnings []string `json:"warnings,omitempty"`
+	Error    Error    `json:"error"`
+}
+
+type Error struct {
+	ErrorConn string `json:"connection,omitempty"`
+	ErrorCert string `json:"certificate,omitempty"`
 }
 
 var globalWarnings []string
 var establishedTLSVersion string
 var establishedCipherSuite string
 var certExpiryStr string
+var hostname string
+var daysLeft int
 
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run main.go <hostname>")
 		return
 	}
-	hostname := os.Args[1]
-	url := hostname
-	if strings.Contains(hostname, "https://") {
-		url = hostname
+	url := os.Args[1]
+	if strings.Contains(url, "https://") {
 		hostname = strings.TrimPrefix(url, "https://")
 	} else if strings.Contains(hostname, "http://") {
-		url = hostname
 		hostname = strings.TrimPrefix(url, "http://")
+	} else {
+		hostname = url
 	}
 
 	globalWarnings = []string{}
@@ -63,8 +91,9 @@ func main() {
 
 	var dnsEnd, connectEnd, tlsEnd, wroteRequestTime, firstByteTime time.Time
 	var remoteIP string
-	var errMsg string
-	var statusCode string
+	var errConnMsg string
+	var errCertMsg string
+	var statusCode int
 	var redirectLocation string
 
 	startTime := time.Now()
@@ -79,7 +108,7 @@ func main() {
 		ConnectDone: func(network, addr string, err error) {
 			connectEnd = time.Now()
 			if err != nil {
-				errMsg = err.Error()
+				errConnMsg = err.Error()
 			} else {
 				host, _, _ := net.SplitHostPort(addr)
 				remoteIP = host
@@ -89,7 +118,7 @@ func main() {
 			if err == nil {
 				tlsEnd = time.Now()
 			} else {
-				errMsg = err.Error()
+				errConnMsg = err.Error()
 			}
 		},
 		WroteRequest: func(_ httptrace.WroteRequestInfo) {
@@ -132,8 +161,8 @@ func main() {
 
 			err = tlsConn.HandshakeContext(ctx)
 			if err != nil {
-				if errMsg == "" {
-					errMsg = err.Error()
+				if errConnMsg == "" {
+					errConnMsg = err.Error()
 				}
 				tlsConn.Close()
 				return nil, err
@@ -179,17 +208,17 @@ func main() {
 				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA:
 
 				suiteName := tls.CipherSuiteName(state.CipherSuite)
-				globalWarnings = append(globalWarnings, fmt.Sprintf("Weak Cipher Suite Detected (%s)", suiteName))
+				globalWarnings = append(globalWarnings, fmt.Sprintf("weak cipher suite detected (%s)", suiteName))
 			}
 
 			// 3. Verify Certificate
 			if len(state.PeerCertificates) > 0 {
 				leafCert := state.PeerCertificates[0]
-				certExpiryStr = leafCert.NotAfter.Format("2006-01-02 15:04:05 UTC")
+				certExpiryStr = leafCert.NotAfter.Format(time.RFC3339)
 
-				daysLeft := time.Until(leafCert.NotAfter).Hours() / 24.0
+				daysLeft = int(time.Until(leafCert.NotAfter).Hours() / 24.0)
 				if daysLeft <= 7.0 && daysLeft > 0 {
-					globalWarnings = append(globalWarnings, fmt.Sprintf("Certificate will expire %.1f days left (%s)", daysLeft, certExpiryStr))
+					globalWarnings = append(globalWarnings, fmt.Sprintf("certificate will expire %d days left (%s)", daysLeft, certExpiryStr))
 				}
 
 				opts := x509.VerifyOptions{
@@ -201,8 +230,8 @@ func main() {
 				}
 
 				if _, verifyErr := leafCert.Verify(opts); verifyErr != nil {
-					if errMsg == "" {
-						errMsg = verifyErr.Error()
+					if errCertMsg == "" {
+						errCertMsg = verifyErr.Error()
 					}
 				}
 			}
@@ -228,22 +257,22 @@ func main() {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		if errMsg == "" {
-			errMsg = err.Error()
+		if errConnMsg == "" {
+			errConnMsg = err.Error()
 		}
-		statusCode = "0"
+		statusCode = 0
 	} else {
 		defer resp.Body.Close()
 
-		statusCode = strconv.Itoa(resp.StatusCode)
+		statusCode = resp.StatusCode
 
 		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
 			redirectLocation = resp.Header.Get("Location")
 		}
 
 		_, err = io.Copy(io.Discard, resp.Body)
-		if err != nil && errMsg == "" {
-			errMsg = err.Error()
+		if err != nil && errConnMsg == "" {
+			errConnMsg = err.Error()
 		}
 	}
 
@@ -280,23 +309,39 @@ func main() {
 		timeStartTransfer = 0
 	}
 
-	metrics := Metrics{
-		ServerHostname:   hostname,
-		ServerIp:         remoteIP,
-		StartTime:        startTime.Format("Mon Jan 2 15:04:05 MST 2006"),
-		DnsLookupMsec:    fmt.Sprintf("%d", timeDNS),
-		TcpConnectMsec:   fmt.Sprintf("%d", timeConnect),
-		TlsConnectMsec:   fmt.Sprintf("%d", timeTLS),
-		RequestSentMsec:  fmt.Sprintf("%d", timePretransfer),
-		TtfbReachedMsec:  fmt.Sprintf("%d", timeStartTransfer),
-		TotalConnectMsec: fmt.Sprintf("%d", totalTime.Milliseconds()),
-		HttpStatus:       statusCode,
-		RedirectUrl:      redirectLocation,
-		TlsVersion:       establishedTLSVersion,
-		CipherSuite:      establishedCipherSuite,
-		CertExpiryDate:   certExpiryStr,
-		Warnings:         globalWarnings,
-		Error:            errMsg,
+	metrics := Response{
+		Site: Site{
+			URL: url,
+			IP:  remoteIP,
+		},
+		StartTime:   startTime.Format(time.RFC3339),
+		StatusCode:  statusCode,
+		RedirectUrl: redirectLocation,
+		Ok:          errConnMsg == "",
+		TimingsMs: Timings{
+			DnsLookup:        int(timeDNS),
+			TcpConnect:       int(timeConnect),
+			TlsHandshake:     int(timeTLS),
+			ServerProcessing: int(timePretransfer),
+			ContentTransfer:  int(timeStartTransfer),
+			Total:            int(totalTime.Milliseconds()),
+		},
+		TLS: TLSConfig{
+			Version: establishedTLSVersion,
+			Cipher:  establishedCipherSuite,
+			Certificate: Certificate{
+				IsValid:       errCertMsg == "",
+				DaysRemaining: daysLeft,
+				ExpiryDate:    certExpiryStr,
+			},
+		},
+		Message: Message{
+			Warnings: globalWarnings,
+			Error: Error{
+				ErrorConn: errConnMsg,
+				ErrorCert: errCertMsg,
+			},
+		},
 	}
 
 	var buf bytes.Buffer
