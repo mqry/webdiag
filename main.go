@@ -325,7 +325,7 @@ func main() {
 			Version: establishedTLSVersion,
 			Cipher:  establishedCipherSuite,
 			Certificate: Certificate{
-				IsValid:       errCertMsg == "",
+				IsValid:       errCertMsg == "" && establishedTLSVersion != "",
 				DaysRemaining: daysLeft,
 				ExpiryDate:    certExpiryStr,
 			},
