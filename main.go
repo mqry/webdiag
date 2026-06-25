@@ -18,7 +18,6 @@ import (
 )
 
 type Metrics struct {
-	ClientIp            string   `json:"client_ip"`
 	ServerHostname      string   `json:"server_hostname"`
 	ServerIp            string   `json:"server_ip"`
 	StartTime           string   `json:"start_time"`
@@ -42,74 +41,13 @@ var establishedTLSVersion string
 var establishedCipherSuite string
 var certExpiryStr string
 
-func getLocalPrivateIP(isIPv6 bool) string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return "127.0.0.1"
-	}
-
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if isIPv6 && ipnet.IP.To4() == nil && strings.Contains(ipnet.IP.String(), ":") {
-				if !ipnet.IP.IsLinkLocalUnicast() {
-					return ipnet.IP.String()
-				}
-			}
-			if !isIPv6 && ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
-		}
-	}
-
-	if isIPv6 {
-		return "::1"
-	}
-	return "127.0.0.1"
-}
-
-func getClientIP(isIPv6 bool) string {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	transport := &http.Transport{
-		DisableKeepAlives: true,
-		DialContext: (&net.Dialer{
-			Timeout: 3 * time.Second,
-		}).DialContext,
-	}
-	client := &http.Client{Transport: transport}
-
-	url := "https://v4.ident.me"
-	if isIPv6 {
-		url = "https://v6.ident.me"
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return "127.0.0.1"
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "127.0.0.1"
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "127.0.0.1"
-	}
-
-	return strings.TrimSpace(string(body))
-}
-
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run main.go <hostname>")
 		return
 	}
 	hostname := os.Args[1]
-	url := "https://" + hostname
+	url := hostname
 	if strings.Contains(hostname, "https://") {
 		url = hostname
 		hostname = strings.TrimPrefix(url, "https://")
@@ -129,8 +67,6 @@ func main() {
 	var statusCode string
 	var redirectLocation string
 
-	var connectedIP net.IP
-
 	startTime := time.Now()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -147,7 +83,6 @@ func main() {
 			} else {
 				host, _, _ := net.SplitHostPort(addr)
 				remoteIP = host
-				connectedIP = net.ParseIP(host)
 			}
 		},
 		TLSHandshakeDone: func(_ tls.ConnectionState, err error) {
@@ -314,25 +249,6 @@ func main() {
 
 	totalTime := time.Since(startTime)
 
-	isIPv6 := false
-	isPrivate := false
-
-	if connectedIP != nil {
-		if connectedIP.To4() == nil {
-			isIPv6 = true
-		}
-		if connectedIP.IsPrivate() || connectedIP.IsLoopback() {
-			isPrivate = true
-		}
-	}
-
-	clientIP := "127.0.0.1"
-	if isPrivate {
-		clientIP = getLocalPrivateIP(isIPv6)
-	} else {
-		clientIP = getClientIP(isIPv6)
-	}
-
 	var timeDNS float64
 	if !dnsEnd.IsZero() {
 		timeDNS = dnsEnd.Sub(startTime).Seconds()
@@ -365,7 +281,6 @@ func main() {
 	}
 
 	metrics := Metrics{
-		ClientIp:            clientIP,
 		ServerHostname:      hostname,
 		ServerIp:            remoteIP,
 		StartTime:           startTime.Format("Mon Jan 2 15:04:05 MST 2006"),
