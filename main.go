@@ -14,6 +14,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"golang.org/x/net/http2"
 )
 
 type Response struct {
@@ -33,18 +35,21 @@ type Site struct {
 }
 
 type Timings struct {
-	DnsLookup        int `json:"dns_lookup"`
-	TcpConnect       int `json:"tcp_connect"`
-	TlsHandshake     int `json:"tls_handshake"`
-	ServerProcessing int `json:"server_processing"`
-	ContentTransfer  int `json:"content_transfer"`
-	Total            int `json:"total"`
+	DnsLookup    int `json:"dns_lookup"`
+	TcpConnect   int `json:"tcp_connect"`
+	TlsHandshake int `json:"tls_handshake"`
+	Pretransfer  int `json:"pretransfer"`
+	Ttfb         int `json:"ttfb"`
+	Total        int `json:"total"`
 }
 
 type TLSConfig struct {
-	Version     string      `json:"version"`
-	Cipher      string      `json:"cipher"`
-	Certificate Certificate `json:"certificate"`
+	Version        string      `json:"version"`
+	ALPN           string      `json:"alpn,omitempty"`
+	Cipher         string      `json:"cipher"`
+	Certificate    Certificate `json:"certificate"`
+	HTTP3Supported bool        `json:"http3_supported"`
+	AltSvc         string      `json:"alt_svc,omitempty"`
 }
 
 type Certificate struct {
@@ -66,9 +71,12 @@ type Error struct {
 var globalWarnings []string
 var establishedTLSVersion string
 var establishedCipherSuite string
+var establishedALPNProtocol string
 var certExpiryStr string
 var hostname string
 var daysLeft int
+var http3Supported bool
+var altSvcHeader string
 
 func main() {
 	if len(os.Args) < 2 {
@@ -82,7 +90,10 @@ func main() {
 	globalWarnings = []string{}
 	establishedTLSVersion = ""
 	establishedCipherSuite = ""
+	establishedALPNProtocol = ""
 	certExpiryStr = ""
+	http3Supported = false
+	altSvcHeader = ""
 
 	var dnsEnd, connectEnd, tlsEnd, wroteRequestTime, firstByteTime time.Time
 	var remoteIP string
@@ -141,6 +152,7 @@ func main() {
 				ServerName:         host,
 				MinVersion:         tls.VersionTLS10,
 				InsecureSkipVerify: true,
+				NextProtos:         []string{"h2", "http/1.1"},
 				CipherSuites: []uint16{
 					tls.TLS_RSA_WITH_AES_128_CBC_SHA,
 					tls.TLS_RSA_WITH_AES_256_CBC_SHA,
@@ -181,6 +193,11 @@ func main() {
 
 			// Record Cipher Suite
 			establishedCipherSuite = tls.CipherSuiteName(state.CipherSuite)
+
+			// Record ALPN Protocol
+			if len(state.NegotiatedProtocol) > 0 {
+				establishedALPNProtocol = state.NegotiatedProtocol
+			}
 
 			// 1. Check TLS Version
 			if state.Version == tls.VersionTLS10 || state.Version == tls.VersionTLS11 {
@@ -235,6 +252,12 @@ func main() {
 		},
 	}
 
+	// Validate HTTP/2 support
+	if err := http2.ConfigureTransport(transport); err != nil {
+		fmt.Printf(`{"ERROR_MESSAGE": "Failed to configure HTTP/2: %s"}`+"\n", err.Error())
+		return
+	}
+
 	client := &http.Client{
 		Transport: transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -260,6 +283,15 @@ func main() {
 		defer resp.Body.Close()
 
 		statusCode = resp.StatusCode
+
+		// Check Alt-Svc header for HTTP/3 support
+		altSvcHeader = resp.Header.Get("Alt-Svc")
+		if altSvcHeader != "" {
+			// Check if h3 or h3-* is present in Alt-Svc header
+			if strings.Contains(altSvcHeader, "h3=") || strings.Contains(altSvcHeader, "h3-") {
+				http3Supported = true
+			}
+		}
 
 		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
 			redirectLocation = resp.Header.Get("Location")
@@ -297,11 +329,11 @@ func main() {
 		timePretransfer = 0
 	}
 
-	var timeStartTransfer int64
+	var ttfb int64
 	if !firstByteTime.IsZero() {
-		timeStartTransfer = firstByteTime.Sub(startTime).Milliseconds() - (timeDNS + timeConnect + timeTLS + timePretransfer)
+		ttfb = firstByteTime.Sub(startTime).Milliseconds() - (timeDNS + timeConnect + timeTLS + timePretransfer)
 	} else {
-		timeStartTransfer = 0
+		ttfb = 0
 	}
 
 	metrics := Response{
@@ -314,12 +346,12 @@ func main() {
 		RedirectUrl: redirectLocation,
 		Ok:          errConnMsg == "",
 		TimingsMs: Timings{
-			DnsLookup:        int(timeDNS),
-			TcpConnect:       int(timeConnect),
-			TlsHandshake:     int(timeTLS),
-			ServerProcessing: int(timePretransfer),
-			ContentTransfer:  int(timeStartTransfer),
-			Total:            int(totalTime.Milliseconds()),
+			DnsLookup:    int(timeDNS),
+			TcpConnect:   int(timeConnect),
+			TlsHandshake: int(timeTLS),
+			Pretransfer:  int(timePretransfer),
+			Ttfb:         int(ttfb),
+			Total:        int(totalTime.Milliseconds()),
 		},
 		TLS: TLSConfig{
 			Version: establishedTLSVersion,
@@ -329,6 +361,9 @@ func main() {
 				DaysRemaining: daysLeft,
 				ExpiryDate:    certExpiryStr,
 			},
+			ALPN:           establishedALPNProtocol,
+			HTTP3Supported: http3Supported,
+			AltSvc:         altSvcHeader,
 		},
 		Message: Message{
 			Warnings: globalWarnings,
