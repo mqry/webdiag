@@ -70,9 +70,13 @@ type TLSConfig struct {
 }
 
 type Certificate struct {
-	IsValid       bool   `json:"is_valid"`
-	DaysRemaining int    `json:"days_remaining"`
-	ExpiryDate    string `json:"expiry_date"`
+	IsValid       bool     `json:"is_valid"`
+	DaysRemaining int      `json:"days_remaining"`
+	Subject       string   `json:"subject,omitempty"`
+	Issuer        string   `json:"issuer,omitempty"`
+	Chains        []string `json:"chains,omitempty"`
+	DnsNames      []string `json:"dns_names,omitempty"`
+	ExpiryDate    string   `json:"expiry_date"`
 }
 
 type Message struct {
@@ -85,15 +89,21 @@ type Error struct {
 	ErrorCert string `json:"certificate,omitempty"`
 }
 
-var globalWarnings []string
+var hostname string
 var establishedTLSVersion string
 var establishedCipherSuite string
 var establishedALPNProtocol string
+var systemPool *x509.CertPool
+var certSubject string
+var certIssuer string
+var certChains []string
+var certDnsNames []string
+var certValid bool
 var certExpiryStr string
-var hostname string
 var daysLeft int
 var http3Supported bool
 var altSvcHeader string
+var globalWarnings []string
 
 func main() {
 	if len(os.Args) < 2 {
@@ -111,6 +121,11 @@ func main() {
 	establishedTLSVersion = ""
 	establishedCipherSuite = ""
 	establishedALPNProtocol = ""
+	certSubject = ""
+	certIssuer = ""
+	certChains = []string{}
+	certDnsNames = []string{}
+	certValid = false
 	certExpiryStr = ""
 	http3Supported = false
 	altSvcHeader = ""
@@ -245,9 +260,24 @@ func main() {
 			}
 
 			// 3. Verify Certificate
+			systemPool, err = x509.SystemCertPool()
+			if err != nil {
+				systemPool = x509.NewCertPool()
+			}
+
+			for _, cert := range state.PeerCertificates[1:] {
+				systemPool.AddCert(cert)
+			}
+			for _, cert := range state.PeerCertificates {
+				certChains = append(certChains, cert.Issuer.String())
+			}
+
 			if len(state.PeerCertificates) > 0 {
 				leafCert := state.PeerCertificates[0]
 				certExpiryStr = leafCert.NotAfter.Format(time.RFC3339)
+				certSubject = leafCert.Subject.String()
+				certIssuer = leafCert.Issuer.String()
+				certDnsNames = leafCert.DNSNames
 
 				daysLeft = int(time.Until(leafCert.NotAfter).Hours() / 24.0)
 				if daysLeft <= 30.0 && daysLeft > 0 {
@@ -257,17 +287,16 @@ func main() {
 				}
 
 				opts := x509.VerifyOptions{
-					DNSName:       host,
-					Intermediates: x509.NewCertPool(),
-				}
-				for _, cert := range state.PeerCertificates[1:] {
-					opts.Intermediates.AddCert(cert)
+					DNSName: host,
+					Roots:   systemPool,
 				}
 
 				if _, verifyErr := leafCert.Verify(opts); verifyErr != nil {
 					if errCertMsg == "" {
 						errCertMsg = verifyErr.Error()
 					}
+				} else {
+					certValid = true
 				}
 			}
 
@@ -392,7 +421,11 @@ func main() {
 			ALPN:    establishedALPNProtocol,
 		},
 		Certificate: Certificate{
-			IsValid:       errCertMsg == "" && establishedTLSVersion != "",
+			IsValid:       certValid && establishedTLSVersion != "",
+			Subject:       certSubject,
+			Issuer:        certIssuer,
+			DnsNames:      certDnsNames,
+			Chains:        certChains,
 			DaysRemaining: daysLeft,
 			ExpiryDate:    certExpiryStr,
 		},
