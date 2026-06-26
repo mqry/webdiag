@@ -19,14 +19,20 @@ import (
 )
 
 type Response struct {
-	Site        Site      `json:"site"`
-	StartTime   string    `json:"start_time"`
-	StatusCode  int       `json:"status_code"`
-	RedirectUrl string    `json:"redirect_url,omitempty"`
-	Ok          bool      `json:"ok"`
-	TimingsMs   Timings   `json:"timings_ms"`
-	TLS         TLSConfig `json:"tls"`
-	Message     Message   `json:"message"`
+	Scan        Scan        `json:"scan"`
+	Site        Site        `json:"site"`
+	Http        Http        `json:"http"`
+	Http3       Http3       `json:"http3"`
+	TimingsMs   Timings     `json:"timings_ms"`
+	TLS         TLSConfig   `json:"tls"`
+	Certificate Certificate `json:"certificate"`
+	Message     Message     `json:"message"`
+}
+
+type Scan struct {
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+	Duration  int    `json:"duration_ms"`
 }
 
 type Site struct {
@@ -43,13 +49,24 @@ type Timings struct {
 	Total        int `json:"total"`
 }
 
+type Http struct {
+	Ok          bool   `json:"ok"`
+	StatusCode  int    `json:"status_code"`
+	RedirectUrl string `json:"redirect_url,omitempty"`
+	Version     string `json:"version,omitempty"`
+}
+
+type Http3 struct {
+	HTTP3Supported bool   `json:"http3_supported"`
+	AltSvc         string `json:"alt_svc,omitempty"`
+}
+
 type TLSConfig struct {
-	Version        string      `json:"version"`
-	ALPN           string      `json:"alpn,omitempty"`
-	Cipher         string      `json:"cipher"`
-	Certificate    Certificate `json:"certificate"`
-	HTTP3Supported bool        `json:"http3_supported"`
-	AltSvc         string      `json:"alt_svc,omitempty"`
+	SNI     string `json:"sni,omitempty"`
+	Version string `json:"version"`
+	ALPN    string `json:"alpn,omitempty"`
+	Cipher  string `json:"cipher"`
+	AltSvc  string `json:"alt_svc,omitempty"`
 }
 
 type Certificate struct {
@@ -80,12 +97,15 @@ var altSvcHeader string
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go <hostname>")
+		fmt.Println("Usage: go run main.go <url>")
 		return
 	}
 	url := os.Args[1]
 	if !strings.Contains(url, "https://") && !strings.Contains(url, "http://") {
-		url = "https://" + url
+		hostname = url
+		url = "https://" + hostname
+	} else {
+		hostname = strings.Split(strings.TrimPrefix(strings.TrimPrefix(url, "https://"), "http://"), "/")[0]
 	}
 	globalWarnings = []string{}
 	establishedTLSVersion = ""
@@ -100,6 +120,7 @@ func main() {
 	var errConnMsg string
 	var errCertMsg string
 	var statusCode int
+	var httpVersion string
 	var redirectLocation string
 
 	startTime := time.Now()
@@ -283,6 +304,7 @@ func main() {
 		defer resp.Body.Close()
 
 		statusCode = resp.StatusCode
+		httpVersion = resp.Proto
 
 		// Check Alt-Svc header for HTTP/3 support
 		altSvcHeader = resp.Header.Get("Alt-Svc")
@@ -304,6 +326,7 @@ func main() {
 	}
 
 	totalTime := time.Since(startTime)
+	endTime := time.Now()
 
 	var timeDNS int64
 	if !dnsEnd.IsZero() {
@@ -312,39 +335,46 @@ func main() {
 
 	var timeConnect int64
 	if !connectEnd.IsZero() {
-		timeConnect = connectEnd.Sub(startTime).Milliseconds() - timeDNS
+		timeConnect = connectEnd.Sub(dnsEnd).Milliseconds()
 	}
 
 	var timeTLS int64
 	if !tlsEnd.IsZero() {
-		timeTLS = tlsEnd.Sub(startTime).Milliseconds() - (timeDNS + timeConnect)
+		timeTLS = tlsEnd.Sub(connectEnd).Milliseconds()
 	} else {
 		timeTLS = 0
 	}
 
 	var timePretransfer int64
 	if !wroteRequestTime.IsZero() {
-		timePretransfer = wroteRequestTime.Sub(startTime).Milliseconds() - (timeDNS + timeConnect + timeTLS)
+		timePretransfer = wroteRequestTime.Sub(tlsEnd).Milliseconds()
 	} else {
 		timePretransfer = 0
 	}
 
 	var ttfb int64
 	if !firstByteTime.IsZero() {
-		ttfb = firstByteTime.Sub(startTime).Milliseconds() - (timeDNS + timeConnect + timeTLS + timePretransfer)
+		ttfb = firstByteTime.Sub(wroteRequestTime).Milliseconds()
 	} else {
 		ttfb = 0
 	}
 
 	metrics := Response{
+		Scan: Scan{
+			StartTime: startTime.Format(time.RFC3339),
+			EndTime:   endTime.Format(time.RFC3339),
+			Duration:  int(totalTime.Milliseconds()),
+		},
 		Site: Site{
 			URL: url,
 			IP:  remoteIP,
 		},
-		StartTime:   startTime.Format(time.RFC3339),
-		StatusCode:  statusCode,
-		RedirectUrl: redirectLocation,
-		Ok:          errConnMsg == "",
+		Http: Http{
+			Ok:          errConnMsg == "",
+			StatusCode:  statusCode,
+			RedirectUrl: redirectLocation,
+			Version:     httpVersion,
+		},
 		TimingsMs: Timings{
 			DnsLookup:    int(timeDNS),
 			TcpConnect:   int(timeConnect),
@@ -354,14 +384,17 @@ func main() {
 			Total:        int(totalTime.Milliseconds()),
 		},
 		TLS: TLSConfig{
+			SNI:     hostname,
 			Version: establishedTLSVersion,
 			Cipher:  establishedCipherSuite,
-			Certificate: Certificate{
-				IsValid:       errCertMsg == "" && establishedTLSVersion != "",
-				DaysRemaining: daysLeft,
-				ExpiryDate:    certExpiryStr,
-			},
-			ALPN:           establishedALPNProtocol,
+			ALPN:    establishedALPNProtocol,
+		},
+		Certificate: Certificate{
+			IsValid:       errCertMsg == "" && establishedTLSVersion != "",
+			DaysRemaining: daysLeft,
+			ExpiryDate:    certExpiryStr,
+		},
+		Http3: Http3{
 			HTTP3Supported: http3Supported,
 			AltSvc:         altSvcHeader,
 		},
