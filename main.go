@@ -18,6 +18,23 @@ import (
 	"golang.org/x/net/http2"
 )
 
+type Summary struct {
+	Scan         Scan           `json:"scan"`
+	Site         Site           `json:"site"`
+	TimingsMs    Timings        `json:"timings_ms"`
+	Message      SummaryMessage `json:"message"`
+	Http         Http           `json:"http"`
+	Http3        Http3          `json:"http3"`
+	TLS          TLSConfig      `json:"tls"`
+	Certificate  Certificate    `json:"certificate"`
+	RedirectUrls []string       `json:"redirect_urls,omitempty"`
+}
+
+type DiagnosticResult struct {
+	Summary Summary    `json:"summary"`
+	Details []Response `json:"details"`
+}
+
 type Response struct {
 	Scan        Scan        `json:"scan"`
 	Site        Site        `json:"site"`
@@ -84,51 +101,49 @@ type Message struct {
 	Error    Error    `json:"error"`
 }
 
+type RedirectMessage struct {
+	URL      string   `json:"url"`
+	Warnings []string `json:"warnings,omitempty"`
+	Error    Error    `json:"error"`
+}
+
+type SummaryMessage struct {
+	PerRedirect []RedirectMessage `json:"per_redirect"`
+}
+
 type Error struct {
 	ErrorConn string `json:"connection,omitempty"`
 	ErrorCert string `json:"certificate,omitempty"`
 }
 
-var hostname string
-var establishedTLSVersion string
-var establishedCipherSuite string
-var establishedALPNProtocol string
-var systemPool *x509.CertPool
-var certSubject string
-var certIssuer string
-var certChains []string
-var certDnsNames []string
-var certValid bool
-var certExpiryStr string
-var daysLeft int
-var http3Supported bool
-var altSvcHeader string
-var globalWarnings []string
+func diagnoseSite(targetURL string) Response {
+	var hostname string
+	var establishedTLSVersion string
+	var establishedCipherSuite string
+	var establishedALPNProtocol string
+	var systemPool *x509.CertPool
+	var certSubject string
+	var certIssuer string
+	var certChains []string
+	var certDnsNames []string
+	var certValid bool
+	var certExpiryStr string
+	var daysLeft int
+	var http3Supported bool
+	var altSvcHeader string
+	var globalWarnings []string
 
-func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go <url>")
-		return
-	}
-	url := os.Args[1]
+	url := targetURL
 	if !strings.Contains(url, "https://") && !strings.Contains(url, "http://") {
 		hostname = url
 		url = "https://" + hostname
 	} else {
 		hostname = strings.Split(strings.TrimPrefix(strings.TrimPrefix(url, "https://"), "http://"), "/")[0]
 	}
+
 	globalWarnings = []string{}
-	establishedTLSVersion = ""
-	establishedCipherSuite = ""
-	establishedALPNProtocol = ""
-	certSubject = ""
-	certIssuer = ""
 	certChains = []string{}
 	certDnsNames = []string{}
-	certValid = false
-	certExpiryStr = ""
-	http3Supported = false
-	altSvcHeader = ""
 
 	var dnsEnd, connectEnd, tlsEnd, wroteRequestTime, firstByteTime time.Time
 	var remoteIP string
@@ -306,8 +321,28 @@ func main() {
 
 	// Validate HTTP/2 support
 	if err := http2.ConfigureTransport(transport); err != nil {
-		fmt.Printf(`{"ERROR_MESSAGE": "Failed to configure HTTP/2: %s"}`+"\n", err.Error())
-		return
+		// HTTP/2 設定エラーの場合、空の Response を返す
+		errConnMsg = "Failed to configure HTTP/2: " + err.Error()
+		return Response{
+			Scan: Scan{
+				StartTime: startTime.Format(time.RFC3339),
+				EndTime:   time.Now().Format(time.RFC3339),
+				Duration:  0,
+			},
+			Site: Site{
+				URL: url,
+				IP:  "",
+			},
+			Http: Http{
+				Ok:         false,
+				StatusCode: 0,
+			},
+			Message: Message{
+				Error: Error{
+					ErrorConn: errConnMsg,
+				},
+			},
+		}
 	}
 
 	client := &http.Client{
@@ -319,8 +354,28 @@ func main() {
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		fmt.Printf(`{"ERROR_MESSAGE": "%s"}`+"\n", err.Error())
-		return
+		// リクエスト作成エラーの場合、空の Response を返す
+		errConnMsg = err.Error()
+		return Response{
+			Scan: Scan{
+				StartTime: startTime.Format(time.RFC3339),
+				EndTime:   time.Now().Format(time.RFC3339),
+				Duration:  0,
+			},
+			Site: Site{
+				URL: url,
+				IP:  "",
+			},
+			Http: Http{
+				Ok:         false,
+				StatusCode: 0,
+			},
+			Message: Message{
+				Error: Error{
+					ErrorConn: errConnMsg,
+				},
+			},
+		}
 	}
 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
 
@@ -442,12 +497,106 @@ func main() {
 		},
 	}
 
+	return metrics
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("Usage: go run main.go <url>")
+		return
+	}
+
+	initialURL := os.Args[1]
+
+	// リダイレクトを追跡
+	var allDetails []Response
+	var redirectUrls []string
+	currentURL := initialURL
+	maxRedirects := 10
+
+	for i := 0; i < maxRedirects; i++ {
+		result := diagnoseSite(currentURL)
+		allDetails = append(allDetails, result)
+
+		// リダイレクトがある場合
+		if result.Http.RedirectUrl != "" {
+			redirectUrls = append(redirectUrls, result.Http.RedirectUrl)
+			currentURL = result.Http.RedirectUrl
+		} else {
+			// リダイレクトがなければ終了
+			break
+		}
+	}
+
+	// 全体のまとめを作成
+	firstResult := allDetails[0]
+	lastResult := allDetails[len(allDetails)-1]
+
+	// 全体の Duration と タイミングの合算
+	var totalDuration int
+	var totalDnsLookup, totalTcpConnect, totalTlsHandshake, totalPretransfer, totalTtfb, totalTimingsTotal int
+	for _, detail := range allDetails {
+		totalDuration += detail.Scan.Duration
+		totalDnsLookup += detail.TimingsMs.DnsLookup
+		totalTcpConnect += detail.TimingsMs.TcpConnect
+		totalTlsHandshake += detail.TimingsMs.TlsHandshake
+		totalPretransfer += detail.TimingsMs.Pretransfer
+		totalTtfb += detail.TimingsMs.Ttfb
+		totalTimingsTotal += detail.TimingsMs.Total
+	}
+
+	// 各リダイレクト先ごとのメッセージを収集
+	var redirectMessages []RedirectMessage
+	for _, detail := range allDetails {
+		redirectMessages = append(redirectMessages, RedirectMessage{
+			URL:      detail.Site.URL,
+			Warnings: detail.Message.Warnings,
+			Error: Error{
+				ErrorConn: detail.Message.Error.ErrorConn,
+				ErrorCert: detail.Message.Error.ErrorCert,
+			},
+		})
+	}
+
+	summary := Summary{
+		Scan: Scan{
+			StartTime: firstResult.Scan.StartTime,
+			EndTime:   lastResult.Scan.EndTime,
+			Duration:  totalDuration,
+		},
+		Site: Site{
+			URL: firstResult.Site.URL,
+			IP:  lastResult.Site.IP,
+		},
+		TimingsMs: Timings{
+			DnsLookup:    totalDnsLookup,
+			TcpConnect:   totalTcpConnect,
+			TlsHandshake: totalTlsHandshake,
+			Pretransfer:  totalPretransfer,
+			Ttfb:         totalTtfb,
+			Total:        totalTimingsTotal,
+		},
+		Message: SummaryMessage{
+			PerRedirect: redirectMessages,
+		},
+		Http:         lastResult.Http,
+		Http3:        lastResult.Http3,
+		TLS:          lastResult.TLS,
+		Certificate:  lastResult.Certificate,
+		RedirectUrls: redirectUrls,
+	}
+
+	diagnosticResult := DiagnosticResult{
+		Summary: summary,
+		Details: allDetails,
+	}
+
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", " ")
 
-	if err := enc.Encode(metrics); err != nil {
+	if err := enc.Encode(diagnosticResult); err != nil {
 		fmt.Printf(`{"ERROR_MESSAGE": "%s"}`+"\n", err.Error())
 		return
 	}
