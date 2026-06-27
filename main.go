@@ -62,7 +62,7 @@ type Timings struct {
 	TcpConnect   ResponseTime `json:"tcp_connect"`
 	TlsHandshake ResponseTime `json:"tls_handshake"`
 	Pretransfer  ResponseTime `json:"pre_transfer"`
-	Ttfb         ResponseTime `json:"tftp"`
+	Ttfb         ResponseTime `json:"ttfb"`
 	Total        ResponseTime `json:"total"`
 }
 
@@ -120,6 +120,78 @@ type SummaryMessage struct {
 type Error struct {
 	ErrorConn string `json:"connection,omitempty"`
 	ErrorCert string `json:"certificate,omitempty"`
+}
+
+func evaluateTiming(diagType string, diagDuration int) string {
+	switch diagType {
+	case "dns":
+		switch {
+		case diagDuration <= 20:
+			return "good"
+		case diagDuration > 20 && diagDuration <= 50:
+			return "ok"
+		case diagDuration > 50 && diagDuration <= 100:
+			return "warn"
+		case diagDuration > 100:
+			return "error"
+		}
+	case "tcp":
+		switch {
+		case diagDuration <= 10:
+			return "good"
+		case diagDuration > 10 && diagDuration <= 30:
+			return "ok"
+		case diagDuration > 50 && diagDuration <= 100:
+			return "warn"
+		case diagDuration > 100:
+			return "error"
+		}
+	case "tls":
+		switch {
+		case diagDuration <= 50:
+			return "good"
+		case diagDuration > 50 && diagDuration <= 100:
+			return "ok"
+		case diagDuration > 100 && diagDuration <= 200:
+			return "warn"
+		case diagDuration > 200:
+			return "error"
+		}
+	case "pre":
+		switch {
+		case diagDuration <= 2:
+			return "good"
+		case diagDuration > 3 && diagDuration <= 4:
+			return "ok"
+		case diagDuration > 5 && diagDuration <= 10:
+			return "warn"
+		case diagDuration > 10:
+			return "error"
+		}
+	case "ttfb":
+		switch {
+		case diagDuration <= 200:
+			return "good"
+		case diagDuration > 200 && diagDuration <= 500:
+			return "ok"
+		case diagDuration > 500 && diagDuration <= 800:
+			return "warn"
+		case diagDuration > 800:
+			return "error"
+		}
+	case "total":
+		switch {
+		case diagDuration <= 200:
+			return "good"
+		case diagDuration > 200 && diagDuration <= 500:
+			return "ok"
+		case diagDuration > 500 && diagDuration <= 1000:
+			return "warn"
+		case diagDuration > 1000:
+			return "error"
+		}
+	}
+	return "error"
 }
 
 func diagnoseSite(targetURL string) Response {
@@ -417,7 +489,7 @@ func diagnoseSite(targetURL string) Response {
 		}
 	}
 
-	totalTime := time.Since(startTime).Microseconds()
+	totalTime := time.Since(startTime).Milliseconds()
 	endTime := time.Now()
 
 	var timeDNS int64
@@ -540,16 +612,25 @@ func main() {
 
 	// 全体の Duration と タイミングの合算
 	var totalDuration int
-	var totalDnsLookup, totalTcpConnect, totalTlsHandshake, totalPretransfer, totalTtfb, totalTimingsTotal int
+	var totalDnsLookupDuration, totalTcpConnectDuration, totalTlsHandshakeDuration, totalPretransferDuration, totalTtfbDuration, totalTimingsTotalDuration int
 	for _, detail := range allDetails {
 		totalDuration += detail.Scan.Duration
-		totalDnsLookup += detail.TimingsMs.DnsLookup.Duration
-		totalTcpConnect += detail.TimingsMs.TcpConnect.Duration
-		totalTlsHandshake += detail.TimingsMs.TlsHandshake.Duration
-		totalPretransfer += detail.TimingsMs.Pretransfer.Duration
-		totalTtfb += detail.TimingsMs.Ttfb.Duration
-		totalTimingsTotal += detail.TimingsMs.Total.Duration
+		totalDnsLookupDuration += detail.TimingsMs.DnsLookup.Duration
+		totalTcpConnectDuration += detail.TimingsMs.TcpConnect.Duration
+		totalTlsHandshakeDuration += detail.TimingsMs.TlsHandshake.Duration
+		totalPretransferDuration += detail.TimingsMs.Pretransfer.Duration
+		totalTtfbDuration += detail.TimingsMs.Ttfb.Duration
+		totalTimingsTotalDuration += detail.TimingsMs.Total.Duration
 	}
+
+	// Calcurate Per Status
+	var totalDnsLookupStatus, totalTcpConnectStatus, totalTlsHandshakeStatus, totalPretransferStatus, totalTtfbStatus, totalTimingsTotalStatus string
+	totalDnsLookupStatus = evaluateTiming("dns", totalDnsLookupDuration)
+	totalTcpConnectStatus = evaluateTiming("tcp", totalTcpConnectDuration)
+	totalTlsHandshakeStatus = evaluateTiming("tls", totalTlsHandshakeDuration)
+	totalPretransferStatus = evaluateTiming("pre", totalPretransferDuration)
+	totalTtfbStatus = evaluateTiming("ttfb", totalTtfbDuration)
+	totalTimingsTotalStatus = evaluateTiming("total", totalTimingsTotalDuration)
 
 	// 各リダイレクト先ごとのメッセージを収集
 	var redirectMessages []RedirectMessage
@@ -575,12 +656,12 @@ func main() {
 			IP:  lastResult.Site.IP,
 		},
 		TimingsMs: Timings{
-			DnsLookup:    ResponseTime{Duration: totalDnsLookup, Score: 100, Status: "ok"},
-			TcpConnect:   ResponseTime{Duration: totalTcpConnect, Score: 100, Status: "ok"},
-			TlsHandshake: ResponseTime{Duration: totalTlsHandshake, Score: 100, Status: "ok"},
-			Pretransfer:  ResponseTime{Duration: totalPretransfer, Score: 100, Status: "ok"},
-			Ttfb:         ResponseTime{Duration: totalTtfb, Score: 100, Status: "ok"},
-			Total:        ResponseTime{Duration: totalTimingsTotal, Score: 100, Status: "ok"},
+			DnsLookup:    ResponseTime{Duration: totalDnsLookupDuration, Score: 100, Status: totalDnsLookupStatus},
+			TcpConnect:   ResponseTime{Duration: totalTcpConnectDuration, Score: 100, Status: totalTcpConnectStatus},
+			TlsHandshake: ResponseTime{Duration: totalTlsHandshakeDuration, Score: 100, Status: totalTlsHandshakeStatus},
+			Pretransfer:  ResponseTime{Duration: totalPretransferDuration, Score: 100, Status: totalPretransferStatus},
+			Ttfb:         ResponseTime{Duration: totalTtfbDuration, Score: 100, Status: totalTtfbStatus},
+			Total:        ResponseTime{Duration: totalTimingsTotalDuration, Score: 100, Status: totalTimingsTotalStatus},
 		},
 		Message: SummaryMessage{
 			PerRedirect: redirectMessages,
