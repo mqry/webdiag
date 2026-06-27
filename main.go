@@ -58,12 +58,17 @@ type Site struct {
 }
 
 type Timings struct {
-	DnsLookup    int `json:"dns_lookup"`
-	TcpConnect   int `json:"tcp_connect"`
-	TlsHandshake int `json:"tls_handshake"`
-	Pretransfer  int `json:"pretransfer"`
-	Ttfb         int `json:"ttfb"`
-	Total        int `json:"total"`
+	DnsLookup    ResponseTime
+	TcpConnect   ResponseTime
+	TlsHandshake ResponseTime
+	Pretransfer  ResponseTime
+	Ttfb         ResponseTime
+	Total        ResponseTime
+}
+
+type ResponseTime struct {
+	Duration int `json:duration"`
+	Status   int `json:status"`
 }
 
 type Http struct {
