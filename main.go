@@ -24,10 +24,10 @@ type Summary struct {
 	TimingsMs    Timings        `json:"timings_ms"`
 	Message      SummaryMessage `json:"message"`
 	Http         Http           `json:"http"`
+	RedirectUrls []string       `json:"redirect_urls,omitempty"`
 	Http3        Http3          `json:"http3"`
 	TLS          TLSConfig      `json:"tls"`
 	Certificate  Certificate    `json:"certificate"`
-	RedirectUrls []string       `json:"redirect_urls,omitempty"`
 }
 
 type DiagnosticResult struct {
