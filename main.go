@@ -67,8 +67,8 @@ type Timings struct {
 }
 
 type ResponseTime struct {
-	Duration int `json:duration"`
-	Status   int `json:status"`
+	Duration int    `json:duration"`
+	Status   string `json:status"`
 }
 
 type Http struct {
@@ -467,12 +467,12 @@ func diagnoseSite(targetURL string) Response {
 			Version:     httpVersion,
 		},
 		TimingsMs: Timings{
-			DnsLookup:    int(timeDNS),
-			TcpConnect:   int(timeConnect),
-			TlsHandshake: int(timeTLS),
-			Pretransfer:  int(timePretransfer),
-			Ttfb:         int(ttfb),
-			Total:        int(totalTime.Milliseconds()),
+			DnsLookup:    ResponseTime{Duration: int(timeDNS), Status: "ok"},
+			TcpConnect:   ResponseTime{Duration: int(timeConnect), Status: "ok"},
+			TlsHandshake: ResponseTime{Duration: int(timeTLS), Status: "ok"},
+			Pretransfer:  ResponseTime{Duration: int(timePretransfer), Status: "ok"},
+			Ttfb:         ResponseTime{Duration: int(ttfb), Status: "ok"},
+			Total:        ResponseTime{Duration: int(totalTime.Milliseconds()), Status: "ok"},
 		},
 		TLS: TLSConfig{
 			SNI:     hostname,
@@ -542,12 +542,12 @@ func main() {
 	var totalDnsLookup, totalTcpConnect, totalTlsHandshake, totalPretransfer, totalTtfb, totalTimingsTotal int
 	for _, detail := range allDetails {
 		totalDuration += detail.Scan.Duration
-		totalDnsLookup += detail.TimingsMs.DnsLookup
-		totalTcpConnect += detail.TimingsMs.TcpConnect
-		totalTlsHandshake += detail.TimingsMs.TlsHandshake
-		totalPretransfer += detail.TimingsMs.Pretransfer
-		totalTtfb += detail.TimingsMs.Ttfb
-		totalTimingsTotal += detail.TimingsMs.Total
+		totalDnsLookup += detail.TimingsMs.DnsLookup.Duration
+		totalTcpConnect += detail.TimingsMs.TcpConnect.Duration
+		totalTlsHandshake += detail.TimingsMs.TlsHandshake.Duration
+		totalPretransfer += detail.TimingsMs.Pretransfer.Duration
+		totalTtfb += detail.TimingsMs.Ttfb.Duration
+		totalTimingsTotal += detail.TimingsMs.Total.Duration
 	}
 
 	// 各リダイレクト先ごとのメッセージを収集
@@ -574,12 +574,12 @@ func main() {
 			IP:  lastResult.Site.IP,
 		},
 		TimingsMs: Timings{
-			DnsLookup:    totalDnsLookup,
-			TcpConnect:   totalTcpConnect,
-			TlsHandshake: totalTlsHandshake,
-			Pretransfer:  totalPretransfer,
-			Ttfb:         totalTtfb,
-			Total:        totalTimingsTotal,
+			DnsLookup:    ResponseTime{Duration: totalDnsLookup, Status: "ok"},
+			TcpConnect:   ResponseTime{Duration: totalTcpConnect, Status: "ok"},
+			TlsHandshake: ResponseTime{Duration: totalTlsHandshake, Status: "ok"},
+			Pretransfer:  ResponseTime{Duration: totalPretransfer, Status: "ok"},
+			Ttfb:         ResponseTime{Duration: totalTtfb, Status: "ok"},
+			Total:        ResponseTime{Duration: totalTimingsTotal, Status: "ok"},
 		},
 		Message: SummaryMessage{
 			PerRedirect: redirectMessages,
