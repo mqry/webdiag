@@ -58,17 +58,18 @@ type Site struct {
 }
 
 type Timings struct {
-	DnsLookup    ResponseTime
-	TcpConnect   ResponseTime
-	TlsHandshake ResponseTime
-	Pretransfer  ResponseTime
-	Ttfb         ResponseTime
-	Total        ResponseTime
+	DnsLookup    ResponseTime `json:"dns_lookup"`
+	TcpConnect   ResponseTime `json:"tcp_connect"`
+	TlsHandshake ResponseTime `json:"tls_handshake"`
+	Pretransfer  ResponseTime `json:"pre_transfer"`
+	Ttfb         ResponseTime `json:"tftp"`
+	Total        ResponseTime `json:"total"`
 }
 
 type ResponseTime struct {
-	Duration int    `json:duration"`
-	Status   string `json:status"`
+	Duration int    `json:"duration"`
+	Score    int    `json:"score"`
+	Status   string `json:"status"`
 }
 
 type Http struct {
@@ -416,7 +417,7 @@ func diagnoseSite(targetURL string) Response {
 		}
 	}
 
-	totalTime := time.Since(startTime)
+	totalTime := time.Since(startTime).Microseconds()
 	endTime := time.Now()
 
 	var timeDNS int64
@@ -454,7 +455,7 @@ func diagnoseSite(targetURL string) Response {
 		Scan: Scan{
 			StartTime: startTime.Format(time.RFC3339),
 			EndTime:   endTime.Format(time.RFC3339),
-			Duration:  int(totalTime.Milliseconds()),
+			Duration:  int(totalTime),
 		},
 		Site: Site{
 			URL: url,
@@ -467,12 +468,12 @@ func diagnoseSite(targetURL string) Response {
 			Version:     httpVersion,
 		},
 		TimingsMs: Timings{
-			DnsLookup:    ResponseTime{Duration: int(timeDNS), Status: "ok"},
-			TcpConnect:   ResponseTime{Duration: int(timeConnect), Status: "ok"},
-			TlsHandshake: ResponseTime{Duration: int(timeTLS), Status: "ok"},
-			Pretransfer:  ResponseTime{Duration: int(timePretransfer), Status: "ok"},
-			Ttfb:         ResponseTime{Duration: int(ttfb), Status: "ok"},
-			Total:        ResponseTime{Duration: int(totalTime.Milliseconds()), Status: "ok"},
+			DnsLookup:    ResponseTime{Duration: int(timeDNS), Score: 100, Status: "ok"},
+			TcpConnect:   ResponseTime{Duration: int(timeConnect), Score: 100, Status: "ok"},
+			TlsHandshake: ResponseTime{Duration: int(timeTLS), Score: 100, Status: "ok"},
+			Pretransfer:  ResponseTime{Duration: int(timePretransfer), Score: 100, Status: "ok"},
+			Ttfb:         ResponseTime{Duration: int(ttfb), Score: 100, Status: "ok"},
+			Total:        ResponseTime{Duration: int(totalTime), Score: 100, Status: "ok"},
 		},
 		TLS: TLSConfig{
 			SNI:     hostname,
@@ -574,12 +575,12 @@ func main() {
 			IP:  lastResult.Site.IP,
 		},
 		TimingsMs: Timings{
-			DnsLookup:    ResponseTime{Duration: totalDnsLookup, Status: "ok"},
-			TcpConnect:   ResponseTime{Duration: totalTcpConnect, Status: "ok"},
-			TlsHandshake: ResponseTime{Duration: totalTlsHandshake, Status: "ok"},
-			Pretransfer:  ResponseTime{Duration: totalPretransfer, Status: "ok"},
-			Ttfb:         ResponseTime{Duration: totalTtfb, Status: "ok"},
-			Total:        ResponseTime{Duration: totalTimingsTotal, Status: "ok"},
+			DnsLookup:    ResponseTime{Duration: totalDnsLookup, Score: 100, Status: "ok"},
+			TcpConnect:   ResponseTime{Duration: totalTcpConnect, Score: 100, Status: "ok"},
+			TlsHandshake: ResponseTime{Duration: totalTlsHandshake, Score: 100, Status: "ok"},
+			Pretransfer:  ResponseTime{Duration: totalPretransfer, Score: 100, Status: "ok"},
+			Ttfb:         ResponseTime{Duration: totalTtfb, Score: 100, Status: "ok"},
+			Total:        ResponseTime{Duration: totalTimingsTotal, Score: 100, Status: "ok"},
 		},
 		Message: SummaryMessage{
 			PerRedirect: redirectMessages,
