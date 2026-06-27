@@ -92,8 +92,8 @@ type Certificate struct {
 	Subject       string   `json:"subject,omitempty"`
 	Issuer        string   `json:"issuer,omitempty"`
 	Chains        []string `json:"chains,omitempty"`
-	DnsNames      []string `json:"dns_names,omitempty"`
-	ExpiryDate    string   `json:"expiry_date"`
+	// DnsNames      []string `json:"dns_names,omitempty"`
+	ExpiryDate string `json:"expiry_date"`
 }
 
 type Message struct {
@@ -125,7 +125,7 @@ func diagnoseSite(targetURL string) Response {
 	var certSubject string
 	var certIssuer string
 	var certChains []string
-	var certDnsNames []string
+	// var certDnsNames []string
 	var certValid bool
 	var certExpiryStr string
 	var daysLeft int
@@ -143,7 +143,7 @@ func diagnoseSite(targetURL string) Response {
 
 	globalWarnings = []string{}
 	certChains = []string{}
-	certDnsNames = []string{}
+	// certDnsNames = []string{}
 
 	var dnsEnd, connectEnd, tlsEnd, wroteRequestTime, firstByteTime time.Time
 	var remoteIP string
@@ -292,7 +292,7 @@ func diagnoseSite(targetURL string) Response {
 				certExpiryStr = leafCert.NotAfter.Format(time.RFC3339)
 				certSubject = leafCert.Subject.String()
 				certIssuer = leafCert.Issuer.String()
-				certDnsNames = leafCert.DNSNames
+				// certDnsNames = leafCert.DNSNames
 
 				daysLeft = int(time.Until(leafCert.NotAfter).Hours() / 24.0)
 				if daysLeft <= 30.0 && daysLeft > 0 {
@@ -476,10 +476,10 @@ func diagnoseSite(targetURL string) Response {
 			ALPN:    establishedALPNProtocol,
 		},
 		Certificate: Certificate{
-			IsValid:       certValid && establishedTLSVersion != "",
-			Subject:       certSubject,
-			Issuer:        certIssuer,
-			DnsNames:      certDnsNames,
+			IsValid: certValid && establishedTLSVersion != "",
+			Subject: certSubject,
+			Issuer:  certIssuer,
+			// DnsNames:      certDnsNames,
 			Chains:        certChains,
 			DaysRemaining: daysLeft,
 			ExpiryDate:    certExpiryStr,
