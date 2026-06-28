@@ -21,13 +21,15 @@ import (
 type Summary struct {
 	Scan         Scan           `json:"scan"`
 	Site         Site           `json:"site"`
+	DNS          Dns            `json:"dns"`
+	TCP          Tcp            `json:"tcp"`
+	TLS          TLSConfig      `json:"tls"`
+	Certificate  Certificate    `json:"certificate"`
 	TimingsMs    Timings        `json:"timings_ms"`
-	Message      SummaryMessage `json:"message"`
 	Http         Http           `json:"http"`
 	RedirectUrls []string       `json:"redirect_urls,omitempty"`
 	Http3        Http3          `json:"http3"`
-	TLS          TLSConfig      `json:"tls"`
-	Certificate  Certificate    `json:"certificate"`
+	Message      SummaryMessage `json:"message"`
 }
 
 type DiagnosticResult struct {
@@ -38,11 +40,13 @@ type DiagnosticResult struct {
 type Response struct {
 	Scan        Scan        `json:"scan"`
 	Site        Site        `json:"site"`
+	DNS         Dns         `json:"dns"`
+	TCP         Tcp         `json:"tcp"`
+	TLS         TLSConfig   `json:"tls"`
+	Certificate Certificate `json:"certificate"`
 	Http        Http        `json:"http"`
 	Http3       Http3       `json:"http3"`
 	TimingsMs   Timings     `json:"timings_ms"`
-	TLS         TLSConfig   `json:"tls"`
-	Certificate Certificate `json:"certificate"`
 	Message     Message     `json:"message"`
 }
 
@@ -56,22 +60,15 @@ type Site struct {
 	URL      string `json:"url"`
 	Hostname string `json:"hostname"`
 	IP       string `json:"ip"`
-	Port     string `json:"port"`
 }
 
-type Timings struct {
-	DnsLookup    ResponseTime `json:"dns_lookup"`
-	TcpConnect   ResponseTime `json:"tcp_connect"`
-	TlsHandshake ResponseTime `json:"tls_handshake"`
-	Pretransfer  ResponseTime `json:"pre_transfer"`
-	Ttfb         ResponseTime `json:"ttfb"`
-	Total        ResponseTime `json:"total"`
+type Dns struct {
+	Status string `json:"status"`
 }
 
-type ResponseTime struct {
-	Duration int    `json:"duration"`
-	Score    int    `json:"score"`
-	Status   string `json:"status"`
+type Tcp struct {
+	Status string `json:"status"`
+	Port   string `json:"port"`
 }
 
 type Http struct {
@@ -87,6 +84,7 @@ type Http3 struct {
 }
 
 type TLSConfig struct {
+	Status  string `json:"status"`
 	SNI     string `json:"sni,omitempty"`
 	Version string `json:"version"`
 	ALPN    string `json:"alpn,omitempty"`
@@ -102,6 +100,21 @@ type Certificate struct {
 	Chains        []string `json:"chains,omitempty"`
 	// DnsNames      []string `json:"dns_names,omitempty"`
 	ExpiryDate string `json:"expiry_date"`
+}
+
+type Timings struct {
+	DnsLookup    ResponseTime `json:"dns_lookup"`
+	TcpConnect   ResponseTime `json:"tcp_connect"`
+	TlsHandshake ResponseTime `json:"tls_handshake"`
+	Pretransfer  ResponseTime `json:"pre_transfer"`
+	Ttfb         ResponseTime `json:"ttfb"`
+	Total        ResponseTime `json:"total"`
+}
+
+type ResponseTime struct {
+	Duration int    `json:"duration"`
+	Score    int    `json:"score"`
+	Status   string `json:"status"`
 }
 
 type Message struct {
@@ -120,6 +133,7 @@ type SummaryMessage struct {
 }
 
 type Error struct {
+	ErrorDns  string `json:"dns,omitempty`
 	ErrorConn string `json:"connection,omitempty"`
 	ErrorCert string `json:"certificate,omitempty"`
 }
@@ -229,8 +243,12 @@ func diagnoseSite(targetURL string) Response {
 
 	var dnsEnd, connectEnd, tlsEnd, wroteRequestTime, firstByteTime time.Time
 	var remoteIP string
+	var errDnsMsg string
 	var errConnMsg string
 	var errCertMsg string
+	var dnsStatus string
+	var tcpStatus string
+	var tlsStatus string
 	var statusCode int
 	var httpStatus string
 	var httpVersion string
@@ -243,23 +261,35 @@ func diagnoseSite(targetURL string) Response {
 
 	trace := &httptrace.ClientTrace{
 		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
-			dnsEnd = time.Now()
+			if dnsInfo.Err != nil {
+				dnsEnd = time.Now()
+				errDnsMsg = dnsInfo.Err.Error()
+				dnsStatus = "error"
+				return
+			} else {
+				dnsEnd = time.Now()
+				dnsStatus = "ok"
+			}
 		},
 		ConnectDone: func(network, addr string, err error) {
 			connectEnd = time.Now()
 			if err != nil {
 				errConnMsg = err.Error()
+				tcpStatus = "error"
 			} else {
 				host, _, _ := net.SplitHostPort(addr)
 				_, port, _ = net.SplitHostPort(addr)
 				remoteIP = host
+				tcpStatus = "ok"
 			}
 		},
 		TLSHandshakeDone: func(_ tls.ConnectionState, err error) {
 			if err == nil {
 				tlsEnd = time.Now()
+				tlsStatus = "ok"
 			} else {
 				errConnMsg = err.Error()
+				tlsStatus = "error"
 			}
 		},
 		WroteRequest: func(_ httptrace.WroteRequestInfo) {
@@ -451,7 +481,6 @@ func diagnoseSite(targetURL string) Response {
 				URL:      url,
 				Hostname: hostname,
 				IP:       "",
-				Port:     "",
 			},
 			Http: Http{
 				Status:     "error",
@@ -552,13 +581,38 @@ func diagnoseSite(targetURL string) Response {
 			URL:      url,
 			Hostname: hostname,
 			IP:       remoteIP,
-			Port:     port,
+		},
+		DNS: Dns{
+			Status: dnsStatus,
+		},
+		TCP: Tcp{
+			Status: tcpStatus,
+			Port:   port,
+		},
+		TLS: TLSConfig{
+			Status:  tlsStatus,
+			SNI:     hostname,
+			Version: establishedTLSVersion,
+			Cipher:  establishedCipherSuite,
+			ALPN:    establishedALPNProtocol,
+		},
+		Certificate: Certificate{
+			Status:        certStatus,
+			Subject:       certSubject,
+			Issuer:        certIssuer,
+			Chains:        certChains,
+			DaysRemaining: daysLeft,
+			ExpiryDate:    certExpiryStr,
 		},
 		Http: Http{
 			Status:      httpStatus,
 			StatusCode:  statusCode,
 			RedirectUrl: redirectLocation,
 			Version:     httpVersion,
+		},
+		Http3: Http3{
+			HTTP3Supported: http3Supported,
+			AltSvc:         altSvcHeader,
 		},
 		TimingsMs: Timings{
 			DnsLookup:    ResponseTime{Duration: int(timeDNS), Score: 100, Status: "ok"},
@@ -568,28 +622,10 @@ func diagnoseSite(targetURL string) Response {
 			Ttfb:         ResponseTime{Duration: int(ttfb), Score: 100, Status: "ok"},
 			Total:        ResponseTime{Duration: int(totalTime), Score: 100, Status: "ok"},
 		},
-		TLS: TLSConfig{
-			SNI:     hostname,
-			Version: establishedTLSVersion,
-			Cipher:  establishedCipherSuite,
-			ALPN:    establishedALPNProtocol,
-		},
-		Certificate: Certificate{
-			Status:  certStatus,
-			Subject: certSubject,
-			Issuer:  certIssuer,
-			// DnsNames:      certDnsNames,
-			Chains:        certChains,
-			DaysRemaining: daysLeft,
-			ExpiryDate:    certExpiryStr,
-		},
-		Http3: Http3{
-			HTTP3Supported: http3Supported,
-			AltSvc:         altSvcHeader,
-		},
 		Message: Message{
 			Warnings: globalWarnings,
 			Error: Error{
+				ErrorDns:  errDnsMsg,
 				ErrorConn: errConnMsg,
 				ErrorCert: errCertMsg,
 			},
@@ -665,6 +701,7 @@ func main() {
 			URL:      detail.Site.URL,
 			Warnings: detail.Message.Warnings,
 			Error: Error{
+				ErrorDns:  detail.Message.Error.ErrorDns,
 				ErrorConn: detail.Message.Error.ErrorConn,
 				ErrorCert: detail.Message.Error.ErrorCert,
 			},
@@ -681,8 +718,16 @@ func main() {
 			URL:      firstResult.Site.URL,
 			Hostname: firstResult.Site.Hostname,
 			IP:       lastResult.Site.IP,
-			Port:     lastResult.Site.Port,
 		},
+		DNS: Dns{
+			Status: lastResult.DNS.Status,
+		},
+		TCP: Tcp{
+			Status: lastResult.TCP.Status,
+			Port:   lastResult.TCP.Port,
+		},
+		TLS:         lastResult.TLS,
+		Certificate: lastResult.Certificate,
 		TimingsMs: Timings{
 			DnsLookup:    ResponseTime{Duration: totalDnsLookupDuration, Score: 100, Status: totalDnsLookupStatus},
 			TcpConnect:   ResponseTime{Duration: totalTcpConnectDuration, Score: 100, Status: totalTcpConnectStatus},
@@ -696,8 +741,6 @@ func main() {
 		},
 		Http:         lastResult.Http,
 		Http3:        lastResult.Http3,
-		TLS:          lastResult.TLS,
-		Certificate:  lastResult.Certificate,
 		RedirectUrls: redirectUrls,
 	}
 
@@ -746,7 +789,7 @@ func main() {
 			// TCP
 			fmt.Printf("TCP\n")
 			fmt.Printf("---\n")
-			fmt.Printf("Port           %s\n", detail.Site.Port)
+			fmt.Printf("Port           %s\n", detail.TCP.Port)
 			fmt.Printf("\n")
 
 			// TLS
