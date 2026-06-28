@@ -53,8 +53,10 @@ type Scan struct {
 }
 
 type Site struct {
-	URL string `json:"url"`
-	IP  string `json:"ip"`
+	URL      string `json:"url"`
+	Hostname string `json:"hostname"`
+	IP       string `json:"ip"`
+	Port     string `json:"port"`
 }
 
 type Timings struct {
@@ -80,7 +82,7 @@ type Http struct {
 }
 
 type Http3 struct {
-	HTTP3Supported bool   `json:"http3_supported"`
+	HTTP3Supported string `json:"http3_supported"`
 	AltSvc         string `json:"alt_svc,omitempty"`
 }
 
@@ -196,6 +198,7 @@ func evaluateTiming(diagType string, diagDuration int) string {
 
 func diagnoseSite(targetURL string) Response {
 	var hostname string
+	var port string
 	var establishedTLSVersion string
 	var establishedCipherSuite string
 	var establishedALPNProtocol string
@@ -208,7 +211,7 @@ func diagnoseSite(targetURL string) Response {
 	var certStatus string
 	var certExpiryStr string
 	var daysLeft int
-	var http3Supported bool
+	var http3Supported string
 	var altSvcHeader string
 	var globalWarnings []string
 
@@ -248,6 +251,7 @@ func diagnoseSite(targetURL string) Response {
 				errConnMsg = err.Error()
 			} else {
 				host, _, _ := net.SplitHostPort(addr)
+				_, port, _ = net.SplitHostPort(addr)
 				remoteIP = host
 			}
 		},
@@ -311,13 +315,13 @@ func diagnoseSite(targetURL string) Response {
 			// Record TLS Version
 			switch state.Version {
 			case tls.VersionTLS10:
-				establishedTLSVersion = "TLS 1.0"
+				establishedTLSVersion = "1.0"
 			case tls.VersionTLS11:
-				establishedTLSVersion = "TLS 1.1"
+				establishedTLSVersion = "1.1"
 			case tls.VersionTLS12:
-				establishedTLSVersion = "TLS 1.2"
+				establishedTLSVersion = "1.2"
 			case tls.VersionTLS13:
-				establishedTLSVersion = "TLS 1.3"
+				establishedTLSVersion = "1.3"
 			default:
 				establishedTLSVersion = fmt.Sprintf("Unknown (0x%04X)", state.Version)
 			}
@@ -410,8 +414,9 @@ func diagnoseSite(targetURL string) Response {
 				Duration:  0,
 			},
 			Site: Site{
-				URL: url,
-				IP:  "",
+				URL:      url,
+				Hostname: hostname,
+				IP:       "",
 			},
 			Http: Http{
 				Status:     "error",
@@ -443,8 +448,10 @@ func diagnoseSite(targetURL string) Response {
 				Duration:  0,
 			},
 			Site: Site{
-				URL: url,
-				IP:  "",
+				URL:      url,
+				Hostname: hostname,
+				IP:       "",
+				Port:     "",
 			},
 			Http: Http{
 				Status:     "error",
@@ -477,7 +484,7 @@ func diagnoseSite(targetURL string) Response {
 		if altSvcHeader != "" {
 			// Check if h3 or h3-* is present in Alt-Svc header
 			if strings.Contains(altSvcHeader, "h3=") || strings.Contains(altSvcHeader, "h3-") {
-				http3Supported = true
+				http3Supported = "ok"
 			}
 		}
 
@@ -542,8 +549,10 @@ func diagnoseSite(targetURL string) Response {
 			Duration:  int(totalTime),
 		},
 		Site: Site{
-			URL: url,
-			IP:  remoteIP,
+			URL:      url,
+			Hostname: hostname,
+			IP:       remoteIP,
+			Port:     port,
 		},
 		Http: Http{
 			Status:      httpStatus,
@@ -669,8 +678,10 @@ func main() {
 			Duration:  totalDuration,
 		},
 		Site: Site{
-			URL: firstResult.Site.URL,
-			IP:  lastResult.Site.IP,
+			URL:      firstResult.Site.URL,
+			Hostname: firstResult.Site.Hostname,
+			IP:       lastResult.Site.IP,
+			Port:     lastResult.Site.Port,
 		},
 		TimingsMs: Timings{
 			DnsLookup:    ResponseTime{Duration: totalDnsLookupDuration, Score: 100, Status: totalDnsLookupStatus},
@@ -712,11 +723,87 @@ func main() {
 
 	// Verbose Mode
 	if *verboseFlag {
-		fmt.Println("[INFO] The diagnostic results will be displayed in detail...")
-		for _, detail := range allDetails {
-			fmt.Printf("[DETAILS] %s\n", detail.Scan.StartTime)
-			fmt.Printf("[DETAILS] %s\n", detail.Scan.EndTime)
-			fmt.Printf("[DETAILS] %s\n", detail.Site.URL)
+		for i, detail := range allDetails {
+			// Time
+			fmt.Printf("Time\n")
+			fmt.Printf("----\n")
+			fmt.Printf("%s\n", detail.Scan.StartTime)
+			fmt.Printf("\n")
+
+			// URL
+			fmt.Printf("URL\n")
+			fmt.Printf("---\n")
+			fmt.Printf("%s\n", detail.Site.URL)
+			fmt.Printf("\n")
+
+			// DNS
+			fmt.Printf("DNS\n")
+			fmt.Printf("---\n")
+			fmt.Printf("Hostname       %s\n", detail.Site.Hostname)
+			fmt.Printf("IP             %s\n", detail.Site.IP)
+			fmt.Printf("\n")
+
+			// TCP
+			fmt.Printf("TCP\n")
+			fmt.Printf("---\n")
+			fmt.Printf("Port           %s\n", detail.Site.Port)
+			fmt.Printf("\n")
+
+			// TLS
+			fmt.Printf("TLS\n")
+			fmt.Printf("---\n")
+			fmt.Printf("Version        %s\n", detail.TLS.Version)
+			fmt.Printf("ALPN           %s\n", detail.TLS.ALPN)
+			fmt.Printf("Cipher         %s\n", detail.TLS.Cipher)
+			fmt.Printf("SNI            %s\n", detail.TLS.SNI)
+			fmt.Printf("\n")
+
+			// Certificate
+			fmt.Printf("Certificate\n")
+			fmt.Printf("-----------\n")
+			fmt.Printf("Subject        %s\n", detail.Certificate.Subject)
+			fmt.Printf("Issuer         %s\n", detail.Certificate.Issuer)
+			fmt.Printf("Expires        %s\n", detail.Certificate.ExpiryDate)
+			fmt.Printf("Days Left      %d\n", detail.Certificate.DaysRemaining)
+			fmt.Printf("Chain          %s\n", strings.ToUpper(detail.Certificate.Status))
+			fmt.Printf("\n")
+
+			// HTTP
+			fmt.Printf("HTTP\n")
+			fmt.Printf("----\n")
+			fmt.Printf("Version        %s\n", detail.Http.Version)
+			fmt.Printf("Status         %d\n", detail.Http.StatusCode)
+			fmt.Printf("Redirect       %s\n", detail.Http.RedirectUrl)
+			fmt.Printf("\n")
+
+			// HTTP/3
+			fmt.Printf("HTTP/3\n")
+			fmt.Printf("------\n")
+			fmt.Printf("")
+			fmt.Printf("Supported      %s\n", strings.ToUpper(detail.Http3.HTTP3Supported))
+			fmt.Printf("Alt-Svc        %s\n", detail.Http3.AltSvc)
+			fmt.Printf("\n")
+
+			// Timings
+			fmt.Printf("Timinigs\n")
+			fmt.Printf("--------\n")
+			fmt.Printf("  DNS          %d ms\n", detail.TimingsMs.DnsLookup.Duration)
+			fmt.Printf("  TCP          %d ms\n", detail.TimingsMs.TcpConnect.Duration)
+			fmt.Printf("  TLS          %d ms\n", detail.TimingsMs.TlsHandshake.Duration)
+			fmt.Printf("  TTFB         %d ms\n", detail.TimingsMs.Ttfb.Duration)
+			fmt.Printf("  Total        %d ms\n", detail.TimingsMs.Total.Duration)
+			fmt.Printf("\n")
+
+			// Option: Redirect Arrow
+			if i+1 < len(allDetails) {
+				fmt.Printf("|\n")
+				fmt.Printf("|\n")
+				fmt.Printf("| Redirect: %d\n", detail.Http.StatusCode)
+				fmt.Printf("|\n")
+				fmt.Printf("v\n")
+				fmt.Printf("\n")
+			}
+
 		}
 		return
 	}
