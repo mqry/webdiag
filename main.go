@@ -133,7 +133,7 @@ type SummaryMessage struct {
 }
 
 type Error struct {
-	ErrorDns  string `json:"dns,omitempty`
+	ErrorDns  string `json:"dns,omitempty"`
 	ErrorConn string `json:"connection,omitempty"`
 	ErrorCert string `json:"certificate,omitempty"`
 }
