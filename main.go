@@ -6,12 +6,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptrace"
-	"os"
 	"strings"
 	"time"
 
@@ -73,7 +73,7 @@ type ResponseTime struct {
 }
 
 type Http struct {
-	Ok          bool   `json:"ok"`
+	Status      string `json:"status"`
 	StatusCode  int    `json:"status_code"`
 	RedirectUrl string `json:"redirect_url,omitempty"`
 	Version     string `json:"version,omitempty"`
@@ -228,6 +228,7 @@ func diagnoseSite(targetURL string) Response {
 	var errConnMsg string
 	var errCertMsg string
 	var statusCode int
+	var httpStatus string
 	var httpVersion string
 	var redirectLocation string
 
@@ -412,7 +413,7 @@ func diagnoseSite(targetURL string) Response {
 				IP:  "",
 			},
 			Http: Http{
-				Ok:         false,
+				Status:     "error",
 				StatusCode: 0,
 			},
 			Message: Message{
@@ -445,7 +446,7 @@ func diagnoseSite(targetURL string) Response {
 				IP:  "",
 			},
 			Http: Http{
-				Ok:         false,
+				Status:     "error",
 				StatusCode: 0,
 			},
 			Message: Message{
@@ -486,6 +487,10 @@ func diagnoseSite(targetURL string) Response {
 		_, err = io.Copy(io.Discard, resp.Body)
 		if err != nil && errConnMsg == "" {
 			errConnMsg = err.Error()
+		}
+
+		if errConnMsg == "" {
+			httpStatus = "ok"
 		}
 	}
 
@@ -534,7 +539,7 @@ func diagnoseSite(targetURL string) Response {
 			IP:  remoteIP,
 		},
 		Http: Http{
-			Ok:          errConnMsg == "",
+			Status:      httpStatus,
 			StatusCode:  statusCode,
 			RedirectUrl: redirectLocation,
 			Version:     httpVersion,
@@ -579,12 +584,17 @@ func diagnoseSite(targetURL string) Response {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go <url>")
+	jsonFlag := flag.Bool("json", false, "Enable JSON output")
+	verboseFlag := flag.Bool("verbose", false, "Enable verbose output")
+	flag.Parse()
+	args := flag.Args()
+
+	if len(args) < 1 {
+		fmt.Println("Usage: webdiag <url>")
 		return
 	}
 
-	initialURL := os.Args[1]
+	initialURL := args[0]
 
 	// リダイレクトを追跡
 	var allDetails []Response
@@ -678,15 +688,32 @@ func main() {
 		Details: allDetails,
 	}
 
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", " ")
+	// JSON Mode
+	if *jsonFlag {
+		var buf bytes.Buffer
+		enc := json.NewEncoder(&buf)
+		enc.SetEscapeHTML(false)
+		enc.SetIndent("", " ")
 
-	if err := enc.Encode(diagnosticResult); err != nil {
-		fmt.Printf(`{"ERROR_MESSAGE": "%s"}`+"\n", err.Error())
+		if err := enc.Encode(diagnosticResult); err != nil {
+			fmt.Printf(`{"ERROR_MESSAGE": "%s"}`+"\n", err.Error())
+			return
+		}
+		fmt.Print(buf.String())
 		return
 	}
 
-	fmt.Print(buf.String())
+	// Verbose Mode
+	if *verboseFlag {
+		fmt.Println("[INFO] The diagnostic results will be displayed in detail...")
+		fmt.Printf("[DETAILS] %s\n", diagnosticResult.Details[0].Site.URL)
+		return
+	}
+
+	// Default Mode
+	fmt.Printf("[START_TIME]  %s\n", diagnosticResult.Summary.Scan.StartTime)
+	fmt.Printf("[HTTP]  %s\n", diagnosticResult.Summary.Http.Status)
+	fmt.Printf("[TLS_VERSION]  %s\n", diagnosticResult.Summary.TLS.Version)
+	fmt.Printf("[END_TIME]  %s\n", diagnosticResult.Summary.Scan.EndTime)
+
 }
