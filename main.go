@@ -93,7 +93,7 @@ type TLSConfig struct {
 }
 
 type Certificate struct {
-	IsValid       bool     `json:"is_valid"`
+	Status        string   `json:"status"`
 	DaysRemaining int      `json:"days_remaining"`
 	Subject       string   `json:"subject,omitempty"`
 	Issuer        string   `json:"issuer,omitempty"`
@@ -205,6 +205,7 @@ func diagnoseSite(targetURL string) Response {
 	var certChains []string
 	// var certDnsNames []string
 	var certValid bool
+	var certStatus string
 	var certExpiryStr string
 	var daysLeft int
 	var http3Supported bool
@@ -521,6 +522,12 @@ func diagnoseSite(targetURL string) Response {
 		timePretransfer = 0
 	}
 
+	if certValid && establishedTLSVersion != "" {
+		certStatus = "ok"
+	} else {
+		certStatus = "error"
+	}
+
 	var ttfb int64
 	if !firstByteTime.IsZero() {
 		ttfb = firstByteTime.Sub(wroteRequestTime).Milliseconds()
@@ -559,7 +566,7 @@ func diagnoseSite(targetURL string) Response {
 			ALPN:    establishedALPNProtocol,
 		},
 		Certificate: Certificate{
-			IsValid: certValid && establishedTLSVersion != "",
+			Status:  certStatus,
 			Subject: certSubject,
 			Issuer:  certIssuer,
 			// DnsNames:      certDnsNames,
@@ -706,14 +713,29 @@ func main() {
 	// Verbose Mode
 	if *verboseFlag {
 		fmt.Println("[INFO] The diagnostic results will be displayed in detail...")
-		fmt.Printf("[DETAILS] %s\n", diagnosticResult.Details[0].Site.URL)
+		for _, detail := range allDetails {
+			fmt.Printf("[DETAILS] %s\n", detail.Scan.StartTime)
+			fmt.Printf("[DETAILS] %s\n", detail.Scan.EndTime)
+			fmt.Printf("[DETAILS] %s\n", detail.Site.URL)
+		}
 		return
 	}
 
 	// Default Mode
-	fmt.Printf("[START_TIME]  %s\n", diagnosticResult.Summary.Scan.StartTime)
-	fmt.Printf("[HTTP]  %s\n", diagnosticResult.Summary.Http.Status)
-	fmt.Printf("[TLS_VERSION]  %s\n", diagnosticResult.Summary.TLS.Version)
-	fmt.Printf("[END_TIME]  %s\n", diagnosticResult.Summary.Scan.EndTime)
-
+	summary = diagnosticResult.Summary
+	fmt.Printf("URL            %s\n", summary.Site.URL)
+	fmt.Printf("IP             %s\n", summary.Site.IP)
+	fmt.Printf("\n")
+	fmt.Printf("HTTP           %d\n", summary.Http.StatusCode)
+	fmt.Printf("Version        %s\n", summary.Http.Version)
+	fmt.Printf("Redirect       %s\n", summary.RedirectUrls)
+	fmt.Printf("TLS            %s\n", summary.TLS.Version)
+	fmt.Printf("Certificate    %s (%d days)\n", strings.ToUpper(summary.Certificate.Status), summary.Certificate.DaysRemaining)
+	fmt.Printf("\n")
+	fmt.Printf("Timings\n")
+	fmt.Printf("  DNS          %d ms\n", summary.TimingsMs.DnsLookup.Duration)
+	fmt.Printf("  TCP          %d ms\n", summary.TimingsMs.TcpConnect.Duration)
+	fmt.Printf("  TLS          %d ms\n", summary.TimingsMs.TlsHandshake.Duration)
+	fmt.Printf("  TTFB         %d ms\n", summary.TimingsMs.Ttfb.Duration)
+	fmt.Printf("  Total        %d ms\n", summary.TimingsMs.Total.Duration)
 }
