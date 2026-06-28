@@ -832,7 +832,7 @@ func main() {
 			fmt.Printf("HTTP/3\n")
 			fmt.Printf("------\n")
 			fmt.Printf("")
-			fmt.Printf("Supported      %s\n", strings.ToUpper(detail.Http3.HTTP3Supported))
+			fmt.Printf("Supported      %s\n", detail.Http3.HTTP3Supported)
 			fmt.Printf("Alt-Svc        %s\n", detail.Http3.AltSvc)
 			fmt.Printf("\n")
 
@@ -843,7 +843,7 @@ func main() {
 			fmt.Printf("TCP            %d ms\n", detail.TimingsMs.TcpConnect.Duration)
 			fmt.Printf("TLS            %d ms\n", detail.TimingsMs.TlsHandshake.Duration)
 			fmt.Printf("TTFB           %d ms\n", detail.TimingsMs.Ttfb.Duration)
-			fmt.Printf("Total          %d ms\n", detail.TimingsMs.Total.Duration)
+			fmt.Printf("TOTAL          %d ms\n", detail.TimingsMs.Total.Duration)
 			fmt.Printf("\n")
 
 			// Option: Redirect Arrow
@@ -865,13 +865,7 @@ func main() {
 	fmt.Printf("URL            %s\n", summary.Site.URL)
 	fmt.Printf("DNS            %s\n", strings.ToUpper(summary.DNS.Status))
 	fmt.Printf("IP             %s\n", summary.Site.IP)
-	fmt.Printf("TCP            %s\n", strings.ToUpper(summary.TCP.Status))
-	fmt.Printf(" Version       %s\n", summary.Http.Version)
-	if summary.Http.Status == "ok" {
-		fmt.Printf(" Redirect      %s\n", summary.RedirectUrls)
-	} else {
-		fmt.Printf(" Redirect\n")
-	}
+	fmt.Printf("TCP            %s (%s port)\n", strings.ToUpper(summary.TCP.Status), summary.TCP.Port)
 	fmt.Printf("TLS            %s\n", strings.ToUpper(summary.TLS.Status))
 	fmt.Printf(" Version       %s\n", summary.TLS.Version)
 	fmt.Printf(" Cipher        %s\n", summary.TLS.Cipher)
@@ -883,6 +877,11 @@ func main() {
 	fmt.Printf("HTTP           %s\n", strings.ToUpper(summary.Http.Status))
 	fmt.Printf(" Version       %s\n", summary.Http.Version)
 	fmt.Printf(" Status        %d\n", summary.Http.StatusCode)
+	if summary.Http.Status == "ok" {
+		fmt.Printf(" Redirect      %s\n", summary.RedirectUrls)
+	} else {
+		fmt.Printf(" Redirect\n")
+	}
 	fmt.Printf("Timings\n")
 	fmt.Printf(" DNS           %d ms\n", summary.TimingsMs.DnsLookup.Duration)
 	fmt.Printf(" TCP           %d ms\n", summary.TimingsMs.TcpConnect.Duration)
