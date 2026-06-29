@@ -545,7 +545,12 @@ func diagnoseSite(targetURL string) Response {
 
 	var timeConnect int64
 	if !connectEnd.IsZero() {
-		timeConnect = connectEnd.Sub(dnsEnd).Milliseconds()
+		if !dnsEnd.IsZero() {
+			timeConnect = connectEnd.Sub(dnsEnd).Milliseconds()
+		} else {
+			timeConnect = connectEnd.Sub(startTime).Milliseconds()
+		}
+		fmt.Printf("%d\n", int(timeConnect))
 	}
 
 	var timeTLS int64
