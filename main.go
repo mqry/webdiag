@@ -810,13 +810,13 @@ func main() {
 			fmt.Printf("Status         %s\n", strings.ToUpper(detail.Certificate.Status))
 			fmt.Printf("Subject        %s\n", detail.Certificate.Subject)
 			fmt.Printf("Issuer         %s\n", detail.Certificate.Issuer)
-			fmt.Printf("Expires        %s\n", detail.Certificate.ExpiryDate)
+			fmt.Printf("Chain          %s\n", detail.Certificate.Chains)
 			if detail.Certificate.Status == "ok" {
+				fmt.Printf("Expires        %s\n", detail.Certificate.ExpiryDate)
 				fmt.Printf("Days Left      %d\n", detail.Certificate.DaysRemaining)
 			} else {
-				fmt.Printf(" Certificate   ERROR: %s\n", detail.Message.Error.ErrorCert)
+				fmt.Printf("ERROR          %s\n", detail.Message.Error.ErrorCert)
 			}
-			fmt.Printf("Chain          %s\n", strings.ToUpper(detail.Certificate.Status))
 			fmt.Printf("\n")
 
 			// HTTP
