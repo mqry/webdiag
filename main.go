@@ -512,10 +512,10 @@ func diagnoseSite(targetURL string) Response {
 		if altSvcHeader != "" {
 			// Check if h3 or h3-* is present in Alt-Svc header
 			if strings.Contains(altSvcHeader, "h3=") || strings.Contains(altSvcHeader, "h3-") {
-				http3Supported = "true"
+				http3Supported = "yes"
 			}
 		} else {
-			http3Supported = "false"
+			http3Supported = "no"
 		}
 
 		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
