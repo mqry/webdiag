@@ -434,7 +434,6 @@ func diagnoseSite(targetURL string) Response {
 
 	// Validate HTTP/2 support
 	if err := http2.ConfigureTransport(transport); err != nil {
-		// HTTP/2 設定エラーの場合、空の Response を返す
 		errConnMsg = "Failed to configure HTTP/2: " + err.Error()
 		return Response{
 			Scan: Scan{
@@ -812,6 +811,8 @@ func main() {
 			fmt.Printf("Expires        %s\n", detail.Certificate.ExpiryDate)
 			if detail.Certificate.Status == "ok" {
 				fmt.Printf("Days Left      %d\n", detail.Certificate.DaysRemaining)
+			} else {
+				fmt.Printf(" Certificate   ERRROR: %s\n", detail.Message.Error.ErrorCert)
 			}
 			fmt.Printf("Chain          %s\n", strings.ToUpper(detail.Certificate.Status))
 			fmt.Printf("\n")
@@ -871,7 +872,7 @@ func main() {
 	if summary.Certificate.Status == "ok" {
 		fmt.Printf(" Certificate   %s (%d days)\n", strings.ToUpper(summary.Certificate.Status), summary.Certificate.DaysRemaining)
 	} else {
-		fmt.Printf(" Certificate\n")
+		fmt.Printf(" Certificate   ERROR: %s\n", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorCert)
 	}
 	fmt.Printf("HTTP           %s\n", strings.ToUpper(summary.Http.Status))
 	fmt.Printf(" Version       %s\n", summary.Http.Version)
