@@ -474,7 +474,6 @@ func diagnoseSite(targetURL string) Response {
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		// リクエスト作成エラーの場合、空の Response を返す
 		errHttpMsg = err.Error()
 		return Response{
 			Scan: Scan{
@@ -505,6 +504,7 @@ func diagnoseSite(targetURL string) Response {
 	if err != nil {
 		if errConnMsg == "" {
 			errConnMsg = err.Error()
+			tcpStatus = "error"
 		}
 		statusCode = 0
 	} else {
