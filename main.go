@@ -248,7 +248,7 @@ func diagnoseSite(targetURL string) Response {
 	var errTlsMsg string
 	var errCertMsg string
 	var errHttpMsg string
-	var dnsStatus string
+	var dnsStatus string = "unused"
 	var tcpStatus string
 	var tlsStatus string
 	var statusCode int
@@ -878,9 +878,12 @@ func main() {
 	case "ok":
 		fmt.Printf("DNS            %s\n", strings.ToUpper(summary.DNS.Status))
 		fmt.Printf("IP             %s\n", summary.Site.IP)
-	default:
+	case "error":
 		fmt.Printf("DNS            %s (%s)\n", strings.ToUpper(summary.DNS.Status), summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorDns)
 		fmt.Printf("IP\n")
+	default:
+		fmt.Printf("DNS            -\n")
+		fmt.Printf("IP             %s\n", summary.Site.IP)
 	}
 
 	// TCP
