@@ -812,7 +812,7 @@ func main() {
 			if detail.Certificate.Status == "ok" {
 				fmt.Printf("Days Left      %d\n", detail.Certificate.DaysRemaining)
 			} else {
-				fmt.Printf(" Certificate   ERRROR: %s\n", detail.Message.Error.ErrorCert)
+				fmt.Printf(" Certificate   ERROR: %s\n", detail.Message.Error.ErrorCert)
 			}
 			fmt.Printf("Chain          %s\n", strings.ToUpper(detail.Certificate.Status))
 			fmt.Printf("\n")
