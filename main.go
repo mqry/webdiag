@@ -522,7 +522,10 @@ func diagnoseSite(targetURL string) Response {
 		}
 
 		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
-			redirectLocation = resp.Header.Get("Location")
+			// redirectLocation = resp.Header.Get("Location")
+			if loc, err := resp.Location(); err == nil {
+				redirectLocation = loc.String()
+			}
 		}
 
 		_, err = io.Copy(io.Discard, resp.Body)
