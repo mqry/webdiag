@@ -560,6 +560,8 @@ func diagnoseSite(targetURL string) Response {
 
 	if certValid {
 		certStatus = "ok"
+	} else {
+		certStatus = "error"
 	}
 
 	var ttfb int64
