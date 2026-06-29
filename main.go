@@ -726,12 +726,12 @@ func main() {
 		TLS:         lastResult.TLS,
 		Certificate: lastResult.Certificate,
 		TimingsMs: Timings{
-			DnsLookup:    ResponseTime{Duration: totalDnsLookupDuration, Score: 100, Status: totalDnsLookupStatus},
-			TcpConnect:   ResponseTime{Duration: totalTcpConnectDuration, Score: 100, Status: totalTcpConnectStatus},
-			TlsHandshake: ResponseTime{Duration: totalTlsHandshakeDuration, Score: 100, Status: totalTlsHandshakeStatus},
-			Pretransfer:  ResponseTime{Duration: totalPretransferDuration, Score: 100, Status: totalPretransferStatus},
-			Ttfb:         ResponseTime{Duration: totalTtfbDuration, Score: 100, Status: totalTtfbStatus},
-			Total:        ResponseTime{Duration: totalTimingsTotalDuration, Score: 100, Status: totalTimingsTotalStatus},
+			DnsLookup:    ResponseTime{Duration: totalDnsLookupDuration, Status: totalDnsLookupStatus},
+			TcpConnect:   ResponseTime{Duration: totalTcpConnectDuration, Status: totalTcpConnectStatus},
+			TlsHandshake: ResponseTime{Duration: totalTlsHandshakeDuration, Status: totalTlsHandshakeStatus},
+			Pretransfer:  ResponseTime{Duration: totalPretransferDuration, Status: totalPretransferStatus},
+			Ttfb:         ResponseTime{Duration: totalTtfbDuration, Status: totalTtfbStatus},
+			Total:        ResponseTime{Duration: totalTimingsTotalDuration, Status: totalTimingsTotalStatus},
 		},
 		Message: SummaryMessage{
 			PerRedirect: redirectMessages,
