@@ -780,21 +780,21 @@ func main() {
 			fmt.Printf("DNS\n")
 			fmt.Printf("---\n")
 			fmt.Printf("Hostname       %s\n", detail.Site.Hostname)
-			fmt.Printf("Status         %s\n", detail.DNS.Status)
+			fmt.Printf("Status         %s\n", strings.ToUpper(detail.DNS.Status))
 			fmt.Printf("IP             %s\n", detail.Site.IP)
 			fmt.Printf("\n")
 
 			// TCP
 			fmt.Printf("TCP\n")
 			fmt.Printf("---\n")
-			fmt.Printf("Status         %s\n", detail.TCP.Status)
+			fmt.Printf("Status         %s\n", strings.ToUpper(detail.TCP.Status))
 			fmt.Printf("Port           %s\n", detail.TCP.Port)
 			fmt.Printf("\n")
 
 			// TLS
 			fmt.Printf("TLS\n")
 			fmt.Printf("---\n")
-			fmt.Printf("Status         %s\n", detail.TLS.Status)
+			fmt.Printf("Status         %s\n", strings.ToUpper(detail.TLS.Status))
 			fmt.Printf("Version        %s\n", detail.TLS.Version)
 			fmt.Printf("ALPN           %s\n", detail.TLS.ALPN)
 			fmt.Printf("Cipher         %s\n", detail.TLS.Cipher)
@@ -806,7 +806,7 @@ func main() {
 			// Certificate
 			fmt.Printf("Certificate\n")
 			fmt.Printf("-----------\n")
-			fmt.Printf("Status         %s\n", detail.Certificate.Status)
+			fmt.Printf("Status         %s\n", strings.ToUpper(detail.Certificate.Status))
 			fmt.Printf("Subject        %s\n", detail.Certificate.Subject)
 			fmt.Printf("Issuer         %s\n", detail.Certificate.Issuer)
 			fmt.Printf("Expires        %s\n", detail.Certificate.ExpiryDate)
@@ -819,7 +819,7 @@ func main() {
 			// HTTP
 			fmt.Printf("HTTP\n")
 			fmt.Printf("----\n")
-			fmt.Printf("Status         %s\n", detail.Http.Status)
+			fmt.Printf("Status         %s\n", strings.ToUpper(detail.Http.Status))
 			fmt.Printf("Version        %s\n", detail.Http.Version)
 			if detail.Http.Status == "ok" {
 				fmt.Printf("Status         %d\n", detail.Http.StatusCode)
@@ -831,7 +831,7 @@ func main() {
 			fmt.Printf("HTTP/3\n")
 			fmt.Printf("------\n")
 			fmt.Printf("")
-			fmt.Printf("Supported      %s\n", detail.Http3.HTTP3Supported)
+			fmt.Printf("Supported      %s\n", strings.ToUpper(detail.Http3.HTTP3Supported))
 			fmt.Printf("Alt-Svc        %s\n", detail.Http3.AltSvc)
 			fmt.Printf("\n")
 
