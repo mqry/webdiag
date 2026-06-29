@@ -705,6 +705,7 @@ func main() {
 				ErrorConn: detail.Message.Error.ErrorConn,
 				ErrorTls:  detail.Message.Error.ErrorTls,
 				ErrorCert: detail.Message.Error.ErrorCert,
+				ErrorHttp: detail.Message.Error.ErrorHttp,
 			},
 		})
 	}
