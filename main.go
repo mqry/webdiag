@@ -614,12 +614,12 @@ func diagnoseSite(targetURL string) Response {
 			AltSvc:         altSvcHeader,
 		},
 		TimingsMs: Timings{
-			DnsLookup:    ResponseTime{Duration: int(timeDNS), Status: "ok"},
-			TcpConnect:   ResponseTime{Duration: int(timeConnect), Status: "ok"},
-			TlsHandshake: ResponseTime{Duration: int(timeTLS), Status: "ok"},
-			Pretransfer:  ResponseTime{Duration: int(timePretransfer), Status: "ok"},
-			Ttfb:         ResponseTime{Duration: int(ttfb), Status: "ok"},
-			Total:        ResponseTime{Duration: int(totalTime), Status: "ok"},
+			DnsLookup:    ResponseTime{Duration: int(timeDNS), Status: evaluateTiming("dns", int(timeDNS))},
+			TcpConnect:   ResponseTime{Duration: int(timeConnect), Status: evaluateTiming("dns", int(timeConnect))},
+			TlsHandshake: ResponseTime{Duration: int(timeTLS), Status: evaluateTiming("tls", int(timeTLS))},
+			Pretransfer:  ResponseTime{Duration: int(timePretransfer), Status: evaluateTiming("pre", int(timePretransfer))},
+			Ttfb:         ResponseTime{Duration: int(ttfb), Status: evaluateTiming("ttfb", int(ttfb))},
+			Total:        ResponseTime{Duration: int(totalTime), Status: evaluateTiming("total", int(totalTime))},
 		},
 		Message: Message{
 			Warnings: globalWarnings,
