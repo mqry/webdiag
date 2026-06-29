@@ -134,7 +134,9 @@ type SummaryMessage struct {
 type Error struct {
 	ErrorDns  string `json:"dns,omitempty"`
 	ErrorConn string `json:"connection,omitempty"`
+	ErrorTls  string `json:"tls,omitempty"`
 	ErrorCert string `json:"certificate,omitempty"`
+	ErrorHttp string `json:"http,omitempty"`
 }
 
 func evaluateTiming(diagType string, diagDuration int) string {
@@ -220,7 +222,6 @@ func diagnoseSite(targetURL string) Response {
 	var certIssuer string
 	var certChains []string
 	// var certDnsNames []string
-	var certValid bool
 	var certStatus string
 	var certExpiryStr string
 	var daysLeft int
@@ -244,7 +245,9 @@ func diagnoseSite(targetURL string) Response {
 	var remoteIP string
 	var errDnsMsg string
 	var errConnMsg string
+	var errTlsMsg string
 	var errCertMsg string
+	var errHttpMsg string
 	var dnsStatus string
 	var tcpStatus string
 	var tlsStatus string
@@ -287,7 +290,7 @@ func diagnoseSite(targetURL string) Response {
 				tlsEnd = time.Now()
 				tlsStatus = "ok"
 			} else {
-				errConnMsg = err.Error()
+				errTlsMsg = err.Error()
 				tlsStatus = "error"
 			}
 		},
@@ -332,8 +335,8 @@ func diagnoseSite(targetURL string) Response {
 
 			err = tlsConn.HandshakeContext(ctx)
 			if err != nil {
-				if errConnMsg == "" {
-					errConnMsg = err.Error()
+				if errTlsMsg == "" {
+					errTlsMsg = err.Error()
 				}
 				tlsConn.Close()
 				return nil, err
@@ -422,9 +425,10 @@ func diagnoseSite(targetURL string) Response {
 				if _, verifyErr := leafCert.Verify(opts); verifyErr != nil {
 					if errCertMsg == "" {
 						errCertMsg = verifyErr.Error()
+						certStatus = "error"
 					}
 				} else {
-					certValid = true
+					certStatus = "ok"
 				}
 			}
 
@@ -434,7 +438,7 @@ func diagnoseSite(targetURL string) Response {
 
 	// Validate HTTP/2 support
 	if err := http2.ConfigureTransport(transport); err != nil {
-		errConnMsg = "Failed to configure HTTP/2: " + err.Error()
+		errHttpMsg = "Failed to configure HTTP/2: " + err.Error()
 		return Response{
 			Scan: Scan{
 				StartTime: startTime.Format(time.RFC3339),
@@ -452,7 +456,7 @@ func diagnoseSite(targetURL string) Response {
 			},
 			Message: Message{
 				Error: Error{
-					ErrorConn: errConnMsg,
+					ErrorHttp: errHttpMsg,
 				},
 			},
 		}
@@ -468,7 +472,7 @@ func diagnoseSite(targetURL string) Response {
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		// リクエスト作成エラーの場合、空の Response を返す
-		errConnMsg = err.Error()
+		errHttpMsg = err.Error()
 		return Response{
 			Scan: Scan{
 				StartTime: startTime.Format(time.RFC3339),
@@ -486,7 +490,7 @@ func diagnoseSite(targetURL string) Response {
 			},
 			Message: Message{
 				Error: Error{
-					ErrorConn: errConnMsg,
+					ErrorConn: errHttpMsg,
 				},
 			},
 		}
@@ -556,12 +560,6 @@ func diagnoseSite(targetURL string) Response {
 		timePretransfer = wroteRequestTime.Sub(tlsEnd).Milliseconds()
 	} else {
 		timePretransfer = 0
-	}
-
-	if certValid {
-		certStatus = "ok"
-	} else {
-		certStatus = "error"
 	}
 
 	var ttfb int64
@@ -701,6 +699,7 @@ func main() {
 			Error: Error{
 				ErrorDns:  detail.Message.Error.ErrorDns,
 				ErrorConn: detail.Message.Error.ErrorConn,
+				ErrorTls:  detail.Message.Error.ErrorTls,
 				ErrorCert: detail.Message.Error.ErrorCert,
 			},
 		})
