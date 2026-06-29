@@ -425,10 +425,13 @@ func diagnoseSite(targetURL string) Response {
 				if _, verifyErr := leafCert.Verify(opts); verifyErr != nil {
 					if errCertMsg == "" {
 						errCertMsg = verifyErr.Error()
-						certStatus = "error"
 					}
-				} else {
+				}
+
+				if errCertMsg == "" {
 					certStatus = "ok"
+				} else {
+					certStatus = "error"
 				}
 			}
 
