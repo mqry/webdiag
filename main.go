@@ -272,13 +272,13 @@ func diagnoseSite(targetURL string) Response {
 		},
 		ConnectDone: func(network, addr string, err error) {
 			connectEnd = time.Now()
+			host, _, _ := net.SplitHostPort(addr)
+			remoteIP = host
+			_, port, _ = net.SplitHostPort(addr)
 			if err != nil {
 				errConnMsg = err.Error()
 				tcpStatus = "error"
 			} else {
-				host, _, _ := net.SplitHostPort(addr)
-				_, port, _ = net.SplitHostPort(addr)
-				remoteIP = host
 				tcpStatus = "ok"
 			}
 		},
