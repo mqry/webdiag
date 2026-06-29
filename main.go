@@ -550,7 +550,6 @@ func diagnoseSite(targetURL string) Response {
 		} else {
 			timeConnect = connectEnd.Sub(startTime).Milliseconds()
 		}
-		fmt.Printf("%d\n", int(timeConnect))
 	}
 
 	var timeTLS int64
@@ -651,7 +650,7 @@ func main() {
 
 	initialURL := args[0]
 
-	// リダイレクトを追跡
+	// Track redirect
 	var allDetails []Response
 	var redirectUrls []string
 	currentURL := initialURL
