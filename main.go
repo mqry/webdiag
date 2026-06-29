@@ -113,7 +113,6 @@ type Timings struct {
 
 type ResponseTime struct {
 	Duration int    `json:"duration"`
-	Score    int    `json:"score"`
 	Status   string `json:"status"`
 }
 
@@ -615,12 +614,12 @@ func diagnoseSite(targetURL string) Response {
 			AltSvc:         altSvcHeader,
 		},
 		TimingsMs: Timings{
-			DnsLookup:    ResponseTime{Duration: int(timeDNS), Score: 100, Status: "ok"},
-			TcpConnect:   ResponseTime{Duration: int(timeConnect), Score: 100, Status: "ok"},
-			TlsHandshake: ResponseTime{Duration: int(timeTLS), Score: 100, Status: "ok"},
-			Pretransfer:  ResponseTime{Duration: int(timePretransfer), Score: 100, Status: "ok"},
-			Ttfb:         ResponseTime{Duration: int(ttfb), Score: 100, Status: "ok"},
-			Total:        ResponseTime{Duration: int(totalTime), Score: 100, Status: "ok"},
+			DnsLookup:    ResponseTime{Duration: int(timeDNS), Status: "ok"},
+			TcpConnect:   ResponseTime{Duration: int(timeConnect), Status: "ok"},
+			TlsHandshake: ResponseTime{Duration: int(timeTLS), Status: "ok"},
+			Pretransfer:  ResponseTime{Duration: int(timePretransfer), Status: "ok"},
+			Ttfb:         ResponseTime{Duration: int(ttfb), Status: "ok"},
+			Total:        ResponseTime{Duration: int(totalTime), Status: "ok"},
 		},
 		Message: Message{
 			Warnings: globalWarnings,
