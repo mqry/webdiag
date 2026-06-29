@@ -632,6 +632,7 @@ func diagnoseSite(targetURL string) Response {
 			Error: Error{
 				ErrorDns:  errDnsMsg,
 				ErrorConn: errConnMsg,
+				ErrorTls:  errTlsMsg,
 				ErrorCert: errCertMsg,
 			},
 		},
