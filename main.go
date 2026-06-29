@@ -875,7 +875,11 @@ func main() {
 	}
 	fmt.Printf("HTTP           %s\n", strings.ToUpper(summary.Http.Status))
 	fmt.Printf(" Version       %s\n", summary.Http.Version)
-	fmt.Printf(" Status        %d\n", summary.Http.StatusCode)
+	if summary.Http.Status == "ok" {
+		fmt.Printf(" Status        %d\n", summary.Http.StatusCode)
+	} else {
+		fmt.Printf(" Status\n")
+	}
 	if summary.Http.Status == "ok" {
 		fmt.Printf(" Redirect      %s\n", summary.RedirectUrls)
 	} else {
