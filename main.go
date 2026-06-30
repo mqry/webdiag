@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -337,6 +338,7 @@ func diagnoseSite(targetURL string) Response {
 			if err != nil {
 				if errTlsMsg == "" {
 					errTlsMsg = err.Error()
+					tlsStatus = "error"
 				}
 				tlsConn.Close()
 				return nil, err
@@ -492,7 +494,7 @@ func diagnoseSite(targetURL string) Response {
 			},
 			Message: Message{
 				Error: Error{
-					ErrorConn: errHttpMsg,
+					ErrorHttp: errHttpMsg,
 				},
 			},
 		}
@@ -502,9 +504,59 @@ func diagnoseSite(targetURL string) Response {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		if errConnMsg == "" {
-			errConnMsg = err.Error()
+		// Categorize error only if not already classified
+		if errDnsMsg == "" && errConnMsg == "" && errTlsMsg == "" && errCertMsg == "" && errHttpMsg == "" {
+			errMsg := err.Error()
+			var dnsErr *net.DNSError
+
+			if errors.As(err, &dnsErr) {
+				// DNS resolution error
+				errDnsMsg = errMsg
+				dnsStatus = "error"
+			} else if strings.Contains(errMsg, "certificate") ||
+				strings.Contains(errMsg, "x509") {
+				// Certificate verification error
+				errCertMsg = errMsg
+				certStatus = "error"
+			} else if strings.Contains(errMsg, "tls:") ||
+				strings.Contains(errMsg, "TLS handshake") {
+				// TLS handshake error
+				errTlsMsg = errMsg
+				tlsStatus = "error"
+			} else if strings.Contains(errMsg, "connection refused") ||
+				strings.Contains(errMsg, "connection reset") ||
+				strings.Contains(errMsg, "dial tcp") {
+				// TCP connection error
+				errConnMsg = errMsg
+				tcpStatus = "error"
+			} else {
+				// Generic HTTP or unknown error
+				// Default to connection error if unclear
+				errConnMsg = errMsg
+				tcpStatus = "error"
+			}
+		}
+
+		// Ensure status flags are set if error messages exist
+		if errDnsMsg != "" && dnsStatus == "" {
+			dnsStatus = "error"
+		}
+		if errTlsMsg != "" && tlsStatus == "" {
+			tlsStatus = "error"
+		}
+		if errCertMsg != "" && certStatus == "" {
+			certStatus = "error"
+		}
+		if errConnMsg != "" && tcpStatus == "" {
 			tcpStatus = "error"
+		}
+		if errHttpMsg != "" && httpStatus == "" {
+			httpStatus = "error"
+		}
+
+		// Set httpStatus to "error" only if no prior layer had errors
+		if errDnsMsg == "" && errConnMsg == "" && errTlsMsg == "" && errCertMsg == "" && errHttpMsg == "" {
+			httpStatus = "error"
 		}
 		statusCode = 0
 	} else {
@@ -531,12 +583,14 @@ func diagnoseSite(targetURL string) Response {
 		}
 
 		_, err = io.Copy(io.Discard, resp.Body)
-		if err != nil && errConnMsg == "" {
-			errConnMsg = err.Error()
+		if err != nil && errHttpMsg == "" {
+			errHttpMsg = err.Error()
 		}
 
-		if errConnMsg == "" {
+		if errHttpMsg == "" {
 			httpStatus = "ok"
+		} else {
+			httpStatus = "error"
 		}
 	}
 
@@ -623,7 +677,7 @@ func diagnoseSite(targetURL string) Response {
 		},
 		TimingsMs: Timings{
 			DnsLookup:    ResponseTime{Duration: int(timeDNS), Status: evaluateTiming("dns", int(timeDNS))},
-			TcpConnect:   ResponseTime{Duration: int(timeConnect), Status: evaluateTiming("dns", int(timeConnect))},
+			TcpConnect:   ResponseTime{Duration: int(timeConnect), Status: evaluateTiming("tcp", int(timeConnect))},
 			TlsHandshake: ResponseTime{Duration: int(timeTLS), Status: evaluateTiming("tls", int(timeTLS))},
 			Pretransfer:  ResponseTime{Duration: int(timePretransfer), Status: evaluateTiming("pre", int(timePretransfer))},
 			Ttfb:         ResponseTime{Duration: int(ttfb), Status: evaluateTiming("ttfb", int(ttfb))},
@@ -882,8 +936,7 @@ func main() {
 	// DNS
 	switch summary.DNS.Status {
 	case "ok":
-		fmt.Printf("DNS            %s\n", strings.ToUpper(summary.DNS.Status))
-		fmt.Printf(" IP            %s\n", summary.Site.IP)
+		fmt.Printf("DNS            %s (%s)\n", strings.ToUpper(summary.DNS.Status), summary.Site.IP)
 	case "error":
 		fmt.Printf("DNS            %s\n", strings.ToUpper(summary.DNS.Status))
 		fmt.Printf(" Reason        %s\n", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorDns)
@@ -923,7 +976,8 @@ func main() {
 	// HTTP
 	switch summary.Http.Status {
 	case "ok":
-		fmt.Printf("HTTP           %s\n", strings.ToUpper(summary.Http.Version))
+		fmt.Printf("HTTP           %s\n", strings.ToUpper(summary.Http.Status))
+		fmt.Printf(" Version       %s\n", strings.ToUpper(summary.Http.Version))
 		fmt.Printf(" Status        %d\n", summary.Http.StatusCode)
 		if len(summary.RedirectUrls) > 0 {
 			fmt.Printf(" Redirect      %s\n", summary.RedirectUrls)
@@ -939,7 +993,9 @@ func main() {
 	fmt.Printf("Timings\n")
 
 	// DNS
-	fmt.Printf(" %-8s%6d ms\n", "DNS", summary.TimingsMs.DnsLookup.Duration)
+	if summary.DNS.Status == "ok" {
+		fmt.Printf(" %-8s%6d ms\n", "DNS", summary.TimingsMs.DnsLookup.Duration)
+	}
 
 	// TCP
 	if summary.DNS.Status == "ok" || summary.DNS.Status == "unused" {
