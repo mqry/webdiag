@@ -843,73 +843,79 @@ func main() {
 			// DNS
 			fmt.Printf("DNS\n")
 			fmt.Printf("---\n")
-			fmt.Printf("Hostname       %s\n", detail.Site.Hostname)
-			fmt.Printf("Status         %s\n", strings.ToUpper(detail.DNS.Status))
-			fmt.Printf("IP             %s\n", detail.Site.IP)
+			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.DNS.Status))
+			fmt.Printf("%-15s%s\n", "Hostname", detail.Site.Hostname)
+			fmt.Printf("%-15s%s\n", "IP", detail.Site.IP)
+			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorDns)
 			fmt.Printf("\n")
 
 			// TCP
 			fmt.Printf("TCP\n")
 			fmt.Printf("---\n")
-			fmt.Printf("Status         %s\n", strings.ToUpper(detail.TCP.Status))
-			fmt.Printf("Port           %s\n", detail.TCP.Port)
+			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.TCP.Status))
+			fmt.Printf("%-15s%s\n", "Port", detail.TCP.Port)
+			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorConn)
 			fmt.Printf("\n")
 
 			// TLS
 			fmt.Printf("TLS\n")
 			fmt.Printf("---\n")
-			fmt.Printf("Status         %s\n", strings.ToUpper(detail.TLS.Status))
-			fmt.Printf("Version        %s\n", detail.TLS.Version)
-			fmt.Printf("ALPN           %s\n", detail.TLS.ALPN)
-			fmt.Printf("Cipher         %s\n", detail.TLS.Cipher)
+			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.TLS.Status))
+			fmt.Printf("%-15s%s\n", "Version", detail.TLS.Version)
+			fmt.Printf("%-15s%s\n", "ALPN", detail.TLS.ALPN)
+			fmt.Printf("%-15s%s\n", "Cipher", detail.TLS.Cipher)
 			if detail.TLS.Status == "ok" {
-				fmt.Printf("SNI            %s\n", detail.TLS.SNI)
+				fmt.Printf("%-15s%s\n", "SNI", detail.TLS.SNI)
 			}
+			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorTls)
 			fmt.Printf("\n")
 
 			// Certificate
 			fmt.Printf("Certificate\n")
 			fmt.Printf("-----------\n")
-			fmt.Printf("Status         %s\n", strings.ToUpper(detail.Certificate.Status))
-			fmt.Printf("Subject        %s\n", detail.Certificate.Subject)
-			fmt.Printf("Issuer         %s\n", detail.Certificate.Issuer)
+			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.Certificate.Status))
+			fmt.Printf("%-15s%s\n", "Subject", detail.Certificate.Subject)
+			fmt.Printf("%-15s%s\n", "Issuer", detail.Certificate.Issuer)
 			if detail.Certificate.Status == "ok" {
-				fmt.Printf("Chain          %s\n", detail.Certificate.Chains)
-				fmt.Printf("Expires        %s\n", detail.Certificate.ExpiryDate)
-				fmt.Printf("Days Left      %d\n", detail.Certificate.DaysRemaining)
-			} else {
-				fmt.Printf("Chain\n")
-				fmt.Printf("ERROR          %s\n", detail.Message.Error.ErrorCert)
+				for num, certificate := range detail.Certificate.Chains {
+					fmt.Printf("%s#%-8d %s\n", "Chain", num, certificate)
+				}
+				fmt.Printf("%-15s%s\n", "Expires", detail.Certificate.ExpiryDate)
+				fmt.Printf("%-15s%d\n", "Days Left", detail.Certificate.DaysRemaining)
 			}
+			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorCert)
 			fmt.Printf("\n")
 
 			// HTTP
 			fmt.Printf("HTTP\n")
 			fmt.Printf("----\n")
-			fmt.Printf("Status         %s\n", strings.ToUpper(detail.Http.Status))
-			fmt.Printf("Version        %s\n", detail.Http.Version)
+			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.Http.Status))
+			fmt.Printf("%-15s%s\n", "Version", detail.Http.Version)
 			if detail.Http.Status == "ok" {
-				fmt.Printf("Status         %d\n", detail.Http.StatusCode)
+				fmt.Printf("%-15s%d\n", "Status", detail.Http.StatusCode)
 			}
-			fmt.Printf("Redirect       %s\n", detail.Http.RedirectUrl)
+			fmt.Printf("%-15s%s\n", "Redirect", detail.Http.RedirectUrl)
+			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorHttp)
 			fmt.Printf("\n")
 
 			// HTTP/3
 			fmt.Printf("HTTP/3\n")
 			fmt.Printf("------\n")
 			fmt.Printf("")
-			fmt.Printf("Supported      %s\n", strings.ToUpper(detail.Http3.HTTP3Supported))
-			fmt.Printf("Alt-Svc        %s\n", detail.Http3.AltSvc)
+			fmt.Printf("%-15s%s\n", "Supported", strings.ToUpper(detail.Http3.HTTP3Supported))
+			// fmt.Printf("Alt-Svc        %s\n", detail.Http3.AltSvc)
+			fmt.Printf("%-15s%s\n", "Alt-Svc", detail.Http3.AltSvc)
 			fmt.Printf("\n")
 
 			// Timings
 			fmt.Printf("Timinigs\n")
 			fmt.Printf("--------\n")
-			fmt.Printf("DNS            %d ms\n", detail.TimingsMs.DnsLookup.Duration)
-			fmt.Printf("TCP            %d ms\n", detail.TimingsMs.TcpConnect.Duration)
-			fmt.Printf("TLS            %d ms\n", detail.TimingsMs.TlsHandshake.Duration)
-			fmt.Printf("TTFB           %d ms\n", detail.TimingsMs.Ttfb.Duration)
-			fmt.Printf("Total          %d ms\n", detail.TimingsMs.Total.Duration)
+			fmt.Printf("%-8s%10d ms  (%s)\n", "DNS", detail.TimingsMs.DnsLookup.Duration, strings.ToUpper(detail.TimingsMs.DnsLookup.Status))
+			fmt.Printf("%-8s%10d ms  (%s)\n", "TCP", detail.TimingsMs.TcpConnect.Duration, strings.ToUpper(detail.TimingsMs.TcpConnect.Status))
+			fmt.Printf("%-8s%10d ms  (%s)\n", "TLS", detail.TimingsMs.TlsHandshake.Duration, strings.ToUpper(detail.TimingsMs.TlsHandshake.Status))
+			fmt.Printf("%-8s%10d ms  (%s)\n", "PRE", detail.TimingsMs.Pretransfer.Duration, strings.ToUpper(detail.TimingsMs.Pretransfer.Status))
+			fmt.Printf("%-8s%10d ms  (%s)\n", "TTFB", detail.TimingsMs.Ttfb.Duration, strings.ToUpper(summary.TimingsMs.Ttfb.Status))
+			fmt.Printf("%-8s%10d ms\n", "Total", detail.TimingsMs.Total.Duration)
 			fmt.Printf("\n")
 
 			// Option: Redirect Arrow
@@ -930,62 +936,62 @@ func main() {
 	summary = diagnosticResult.Summary
 
 	// Site
-	fmt.Printf("URL            %s\n", summary.Site.URL)
+	fmt.Printf("%-15s%s\n", "URL", summary.Site.URL)
 
 	// DNS
 	switch summary.DNS.Status {
 	case "ok":
-		fmt.Printf("DNS            %s (%s)\n", strings.ToUpper(summary.DNS.Status), summary.Site.IP)
+		fmt.Printf("%-15s%s (%s)\n", "DNS", strings.ToUpper(summary.DNS.Status), summary.Site.IP)
 	case "error":
-		fmt.Printf("DNS            %s\n", strings.ToUpper(summary.DNS.Status))
-		fmt.Printf(" Reason        %s\n", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorDns)
+		fmt.Printf("%-15s%s\n", "DNS", strings.ToUpper(summary.DNS.Status))
+		fmt.Printf(" %-14s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorDns)
 	default:
-		fmt.Printf("IP             %s\n", summary.Site.IP)
+		fmt.Printf("%-15s%s\n", "IP", summary.Site.IP)
 	}
 
 	// TCP
 	switch summary.TCP.Status {
 	case "ok":
-		fmt.Printf("TCP            %s (%s port)\n", strings.ToUpper(summary.TCP.Status), summary.TCP.Port)
+		fmt.Printf("%-15s%s (%s port)\n", "TCP", strings.ToUpper(summary.TCP.Status), summary.TCP.Port)
 	case "error":
-		fmt.Printf("TCP            %s (%s port)\n", strings.ToUpper(summary.TCP.Status), summary.TCP.Port)
-		fmt.Printf(" Reason        %s\n", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorConn)
+		fmt.Printf("%-15s%s (%s port)\n", "TCP", strings.ToUpper(summary.TCP.Status), summary.TCP.Port)
+		fmt.Printf(" %-14s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorConn)
 	}
 
 	// TLS
 	switch summary.TLS.Status {
 	case "ok":
-		fmt.Printf("TLS            %s\n", strings.ToUpper(summary.TLS.Status))
-		fmt.Printf(" Version       %s\n", summary.TLS.Version)
-		fmt.Printf(" Cipher        %s\n", summary.TLS.Cipher)
+		fmt.Printf("%-15s%s\n", "TLS", strings.ToUpper(summary.TLS.Status))
+		fmt.Printf(" %-14s%s\n", "Version", summary.TLS.Version)
+		fmt.Printf(" %-14s%s\n", "Cipher", summary.TLS.Cipher)
 	case "error":
-		fmt.Printf("TLS            %s\n", strings.ToUpper(summary.TLS.Status))
-		fmt.Printf(" Reason        %s\n", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorTls)
+		fmt.Printf("%-15s%s\n", "TLS", strings.ToUpper(summary.TLS.Status))
+		fmt.Printf(" %-14s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorTls)
 	}
 
 	// Certificate
 	switch summary.Certificate.Status {
 	case "ok":
-		fmt.Printf(" Certificate   %s (%d days)\n", strings.ToUpper(summary.Certificate.Status), summary.Certificate.DaysRemaining)
+		fmt.Printf(" %-14s%s (%d days)\n", "Certificate", strings.ToUpper(summary.Certificate.Status), summary.Certificate.DaysRemaining)
 	case "error":
-		fmt.Printf(" Certificate   %s\n", strings.ToUpper(summary.Certificate.Status))
-		fmt.Printf("  Reason       %s\n", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorCert)
+		fmt.Printf(" %-14s%s\n", "Certificate", strings.ToUpper(summary.Certificate.Status))
+		fmt.Printf(" %-14s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorCert)
 	}
 
 	// HTTP
 	switch summary.Http.Status {
 	case "ok":
-		fmt.Printf("HTTP           %s\n", strings.ToUpper(summary.Http.Status))
-		fmt.Printf(" Version       %s\n", strings.ToUpper(summary.Http.Version))
-		fmt.Printf(" Status        %d\n", summary.Http.StatusCode)
+		fmt.Printf("%-15s%s\n", "HTTP", strings.ToUpper(summary.Http.Status))
+		fmt.Printf(" %-14s%s\n", "Version", strings.ToUpper(summary.Http.Version))
+		fmt.Printf(" %-14s%d\n", "Status", summary.Http.StatusCode)
 		if len(summary.RedirectUrls) > 0 {
-			fmt.Printf(" Redirect      %s\n", summary.RedirectUrls)
+			fmt.Printf(" %-14s%s\n", "Redirect", summary.RedirectUrls)
 		} else {
-			fmt.Printf(" Redirect      None\n")
+			fmt.Printf(" %-14s%s\n", "Redirect", "None")
 		}
 	case "error":
-		fmt.Printf("HTTP           %s\n", summary.Http.Version)
-		fmt.Printf(" Reason        %s\n", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorHttp)
+		fmt.Printf("%-15s%s\n", "HTTP", summary.Http.Version)
+		fmt.Printf(" %-14s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorHttp)
 	}
 
 	// Timings
@@ -1013,5 +1019,7 @@ func main() {
 	if summary.DNS.Status == "ok" || summary.DNS.Status == "unused" {
 		fmt.Printf(" %-8s%6d ms\n", "Total", summary.TimingsMs.Total.Duration)
 	}
+
+	fmt.Printf("\n")
 
 }
