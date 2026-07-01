@@ -876,11 +876,11 @@ func main() {
 			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.Certificate.Status))
 			fmt.Printf("%-15s%s\n", "Subject", detail.Certificate.Subject)
 			fmt.Printf("%-15s%s\n", "Issuer", detail.Certificate.Issuer)
-			if detail.Certificate.Status == "ok" {
-				for num, certificate := range detail.Certificate.Chains {
-					fmt.Printf("%s#%-8d %s\n", "Chain", num, certificate)
-				}
-				fmt.Printf("%-15s%s\n", "Expires", detail.Certificate.ExpiryDate)
+			for num, certificate := range detail.Certificate.Chains {
+				fmt.Printf("%s#%-8d %s\n", "Chain", num, certificate)
+			}
+			fmt.Printf("%-15s%s\n", "Expires", detail.Certificate.ExpiryDate)
+			if detail.TLS.Status == "ok" {
 				fmt.Printf("%-15s%d\n", "Days Left", detail.Certificate.DaysRemaining)
 			}
 			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorCert)
@@ -891,7 +891,7 @@ func main() {
 			fmt.Printf("----\n")
 			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.Http.Status))
 			fmt.Printf("%-15s%s\n", "Version", detail.Http.Version)
-			if detail.Http.Status == "ok" {
+			if detail.Http.StatusCode != 0 {
 				fmt.Printf("%-15s%d\n", "Status", detail.Http.StatusCode)
 			}
 			fmt.Printf("%-15s%s\n", "Redirect", detail.Http.RedirectUrl)
@@ -903,7 +903,6 @@ func main() {
 			fmt.Printf("------\n")
 			fmt.Printf("")
 			fmt.Printf("%-15s%s\n", "Supported", strings.ToUpper(detail.Http3.HTTP3Supported))
-			// fmt.Printf("Alt-Svc        %s\n", detail.Http3.AltSvc)
 			fmt.Printf("%-15s%s\n", "Alt-Svc", detail.Http3.AltSvc)
 			fmt.Printf("\n")
 
@@ -975,7 +974,7 @@ func main() {
 		fmt.Printf(" %-14s%s (%d days)\n", "Certificate", strings.ToUpper(summary.Certificate.Status), summary.Certificate.DaysRemaining)
 	case "error":
 		fmt.Printf(" %-14s%s\n", "Certificate", strings.ToUpper(summary.Certificate.Status))
-		fmt.Printf(" %-14s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorCert)
+		fmt.Printf("  %-13s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorCert)
 	}
 
 	// HTTP
