@@ -183,7 +183,9 @@ func evaluateTiming(diagType string, diagDuration int) string {
 		}
 	case "pre":
 		switch {
-		case diagDuration >= 0 && diagDuration <= 2:
+		case diagDuration == 0:
+			return "-"
+		case diagDuration > 0 && diagDuration <= 2:
 			return "good"
 		case diagDuration > 3 && diagDuration <= 4:
 			return "ok"
