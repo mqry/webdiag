@@ -144,69 +144,66 @@ func evaluateTiming(diagType string, diagDuration int) string {
 	switch diagType {
 	case "dns":
 		switch {
-		case diagDuration <= 20:
+		case diagDuration == 0:
+			return "-"
+		case diagDuration > 0 && diagDuration <= 20:
 			return "good"
 		case diagDuration > 20 && diagDuration <= 50:
 			return "ok"
 		case diagDuration > 50 && diagDuration <= 100:
 			return "warn"
 		case diagDuration > 100:
-			return "error"
+			return "bad"
 		}
 	case "tcp":
 		switch {
-		case diagDuration <= 10:
+		case diagDuration == 0:
+			return "-"
+		case diagDuration > 0 && diagDuration <= 10:
 			return "good"
 		case diagDuration > 10 && diagDuration <= 30:
 			return "ok"
 		case diagDuration > 50 && diagDuration <= 100:
 			return "warn"
 		case diagDuration > 100:
-			return "error"
+			return "bad"
 		}
 	case "tls":
 		switch {
-		case diagDuration <= 50:
+		case diagDuration == 0:
+			return "-"
+		case diagDuration > 0 && diagDuration <= 50:
 			return "good"
 		case diagDuration > 50 && diagDuration <= 100:
 			return "ok"
 		case diagDuration > 100 && diagDuration <= 200:
 			return "warn"
 		case diagDuration > 200:
-			return "error"
+			return "bad"
 		}
 	case "pre":
 		switch {
-		case diagDuration <= 2:
+		case diagDuration >= 0 && diagDuration <= 2:
 			return "good"
 		case diagDuration > 3 && diagDuration <= 4:
 			return "ok"
 		case diagDuration > 5 && diagDuration <= 10:
 			return "warn"
 		case diagDuration > 10:
-			return "error"
+			return "bad"
 		}
 	case "ttfb":
 		switch {
-		case diagDuration <= 200:
+		case diagDuration == 0:
+			return "-"
+		case diagDuration > 0 && diagDuration <= 200:
 			return "good"
 		case diagDuration > 200 && diagDuration <= 500:
 			return "ok"
 		case diagDuration > 500 && diagDuration <= 800:
 			return "warn"
 		case diagDuration > 800:
-			return "error"
-		}
-	case "total":
-		switch {
-		case diagDuration <= 200:
-			return "good"
-		case diagDuration > 200 && diagDuration <= 500:
-			return "ok"
-		case diagDuration > 500 && diagDuration <= 1000:
-			return "warn"
-		case diagDuration > 1000:
-			return "error"
+			return "bad"
 		}
 	}
 	return "error"
@@ -990,25 +987,29 @@ func main() {
 	}
 
 	// Timings
-	fmt.Printf("Timings\n")
+	if summary.DNS.Status == "ok" || summary.DNS.Status == "unused" {
+		fmt.Printf("Timings\n")
+	}
 
 	// DNS
 	if summary.DNS.Status == "ok" {
-		fmt.Printf(" %-8s%6d ms\n", "DNS", summary.TimingsMs.DnsLookup.Duration)
+		fmt.Printf(" %-8s%6d ms  (%s)\n", "DNS", summary.TimingsMs.DnsLookup.Duration, strings.ToUpper(summary.TimingsMs.DnsLookup.Status))
 	}
 
 	// TCP
 	if summary.DNS.Status == "ok" || summary.DNS.Status == "unused" {
-		fmt.Printf(" %-8s%6d ms\n", "TCP", summary.TimingsMs.TcpConnect.Duration)
+		fmt.Printf(" %-8s%6d ms  (%s)\n", "TCP", summary.TimingsMs.TcpConnect.Duration, strings.ToUpper(summary.TimingsMs.TcpConnect.Status))
 	}
 
 	// TLS or TTFB
 	if summary.TCP.Status == "ok" {
-		fmt.Printf(" %-8s%6d ms\n", "TLS", summary.TimingsMs.TlsHandshake.Duration)
-		fmt.Printf(" %-8s%6d ms\n", "TFTB", summary.TimingsMs.Ttfb.Duration)
+		fmt.Printf(" %-8s%6d ms  (%s)\n", "TLS", summary.TimingsMs.TlsHandshake.Duration, strings.ToUpper(summary.TimingsMs.TlsHandshake.Status))
+		fmt.Printf(" %-8s%6d ms  (%s)\n", "TTFB", summary.TimingsMs.Ttfb.Duration, strings.ToUpper(summary.TimingsMs.Ttfb.Status))
 	}
 
 	// Total
-	fmt.Printf(" %-8s%6d ms\n", "Total", summary.TimingsMs.Total.Duration)
+	if summary.DNS.Status == "ok" || summary.DNS.Status == "unused" {
+		fmt.Printf(" %-8s%6d ms\n", "Total", summary.TimingsMs.Total.Duration)
+	}
 
 }
