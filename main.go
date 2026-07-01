@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -503,58 +502,8 @@ func diagnoseSite(targetURL string) Response {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		// Categorize error only if not already classified
 		if errDnsMsg == "" && errConnMsg == "" && errTlsMsg == "" && errCertMsg == "" && errHttpMsg == "" {
-			errMsg := err.Error()
-			var dnsErr *net.DNSError
-
-			if errors.As(err, &dnsErr) {
-				// DNS resolution error
-				errDnsMsg = errMsg
-				dnsStatus = "error"
-			} else if strings.Contains(errMsg, "certificate") ||
-				strings.Contains(errMsg, "x509") {
-				// Certificate verification error
-				errCertMsg = errMsg
-				certStatus = "error"
-			} else if strings.Contains(errMsg, "tls:") ||
-				strings.Contains(errMsg, "TLS handshake") {
-				// TLS handshake error
-				errTlsMsg = errMsg
-				tlsStatus = "error"
-			} else if strings.Contains(errMsg, "connection refused") ||
-				strings.Contains(errMsg, "connection reset") ||
-				strings.Contains(errMsg, "dial tcp") {
-				// TCP connection error
-				errConnMsg = errMsg
-				tcpStatus = "error"
-			} else {
-				// Generic HTTP or unknown error
-				// Default to connection error if unclear
-				errConnMsg = errMsg
-				tcpStatus = "error"
-			}
-		}
-
-		// Ensure status flags are set if error messages exist
-		if errDnsMsg != "" && dnsStatus == "" {
-			dnsStatus = "error"
-		}
-		if errTlsMsg != "" && tlsStatus == "" {
-			tlsStatus = "error"
-		}
-		if errCertMsg != "" && certStatus == "" {
-			certStatus = "error"
-		}
-		if errConnMsg != "" && tcpStatus == "" {
-			tcpStatus = "error"
-		}
-		if errHttpMsg != "" && httpStatus == "" {
-			httpStatus = "error"
-		}
-
-		// Set httpStatus to "error" only if no prior layer had errors
-		if errDnsMsg == "" && errConnMsg == "" && errTlsMsg == "" && errCertMsg == "" && errHttpMsg == "" {
+			errHttpMsg = err.Error()
 			httpStatus = "error"
 		}
 		statusCode = 0
