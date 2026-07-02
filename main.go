@@ -229,13 +229,13 @@ func diagnoseSite(targetURL string) Response {
 	var certSubject string
 	var certIssuer string
 	var certChains []string
-	// var certDnsNames []string
+	var certDnsNames []string
 	var certStatus string
 	var certExpiryStr string
 	var daysLeft int
 	var http3Supported string
 	var altSvcHeader string
-	var globalWarnings []string
+	var tlsWarnings []string
 
 	url := targetURL
 	if !strings.Contains(url, "https://") && !strings.Contains(url, "http://") {
