@@ -27,7 +27,7 @@ type Overall struct {
 	Certificate  Certificate    `json:"certificate"`
 	TimingsMs    Timings        `json:"timings_ms"`
 	Http         Http           `json:"http"`
-	RedirectUrls []string       `json:"redirect_urls,omitempty"`
+	RedirectUrls []string       `json:"redirect_urls"`
 	Http3        Http3          `json:"http3"`
 	Message      OverallMessage `json:"message"`
 }
@@ -63,43 +63,49 @@ type Site struct {
 }
 
 type Dns struct {
-	Status string `json:"status"`
+	Status   string `json:"status"`
+	ErrorDns string `json:"error"`
 }
 
 type Tcp struct {
-	Status string `json:"status"`
-	Port   string `json:"port"`
+	Status    string `json:"status"`
+	Port      string `json:"port"`
+	ErrorConn string `json:"error"`
 }
 
 type Http struct {
 	Status      string `json:"status"`
 	StatusCode  int    `json:"status_code"`
-	RedirectUrl string `json:"redirect_url,omitempty"`
-	Version     string `json:"version,omitempty"`
+	RedirectUrl string `json:"redirect_url"`
+	Version     string `json:"version"`
+	ErrorHttp   string `json:"error"`
 }
 
 type Http3 struct {
 	HTTP3Supported string `json:"http3_supported"`
-	AltSvc         string `json:"alt_svc,omitempty"`
+	AltSvc         string `json:"alt_svc"`
 }
 
 type TLSConfig struct {
-	Status  string `json:"status"`
-	SNI     string `json:"sni,omitempty"`
-	Version string `json:"version"`
-	ALPN    string `json:"alpn,omitempty"`
-	Cipher  string `json:"cipher"`
-	AltSvc  string `json:"alt_svc,omitempty"`
+	Status      string   `json:"status"`
+	SNI         string   `json:"sni"`
+	Version     string   `json:"version"`
+	ALPN        string   `json:"alpn"`
+	Cipher      string   `json:"cipher"`
+	AltSvc      string   `json:"alt_svc"`
+	ErrorTls    string   `json:"error"`
+	TlsWarnings []string `json:"warnings"`
 }
 
 type Certificate struct {
 	Status        string   `json:"status"`
 	DaysRemaining int      `json:"days_remaining"`
-	Subject       string   `json:"subject,omitempty"`
-	Issuer        string   `json:"issuer,omitempty"`
-	Chains        []string `json:"chains,omitempty"`
-	// DnsNames      []string `json:"dns_names,omitempty"`
-	ExpiryDate string `json:"expiry_date"`
+	Subject       string   `json:"subject"`
+	Issuer        string   `json:"issuer"`
+	Chains        []string `json:"chains"`
+	DnsNames      []string `json:"dns_names,omitempty"`
+	ExpiryDate    string   `json:"expiry_date"`
+	ErrorCert     string   `json:"error"`
 }
 
 type Timings struct {
@@ -117,13 +123,17 @@ type ResponseTime struct {
 }
 
 type Message struct {
-	Warnings []string `json:"warnings,omitempty"`
+	Warnings []string `json:"warnings"`
 	Error    Error    `json:"error"`
+}
+
+type Warning struct {
+	TlsWarnings []string `json:"warnings"`
 }
 
 type RedirectMessage struct {
 	URL      string   `json:"url"`
-	Warnings []string `json:"warnings,omitempty"`
+	Warnings []string `json:"warnings"`
 	Error    Error    `json:"error"`
 }
 
@@ -132,11 +142,11 @@ type OverallMessage struct {
 }
 
 type Error struct {
-	ErrorDns  string `json:"dns,omitempty"`
-	ErrorConn string `json:"connection,omitempty"`
-	ErrorTls  string `json:"tls,omitempty"`
-	ErrorCert string `json:"certificate,omitempty"`
-	ErrorHttp string `json:"http,omitempty"`
+	ErrorDns  string `json:"dnsError"`
+	ErrorConn string `json:"tcpError"`
+	ErrorTls  string `json:"tlsError"`
+	ErrorCert string `json:"certError"`
+	ErrorHttp string `json:"httpError"`
 }
 
 func evaluateTiming(diagType string, diagDuration int) string {
