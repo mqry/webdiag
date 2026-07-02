@@ -47,7 +47,6 @@ type Response struct {
 	Http        Http        `json:"http"`
 	Http3       Http3       `json:"http3"`
 	TimingsMs   Timings     `json:"timings_ms"`
-	Message     Message     `json:"message"`
 }
 
 type Scan struct {
@@ -246,9 +245,9 @@ func diagnoseSite(targetURL string) Response {
 		hostname = strings.Split(strings.TrimPrefix(strings.TrimPrefix(url, "https://"), "http://"), "/")[0]
 	}
 
-	globalWarnings = []string{}
+	tlsWarnings = []string{}
 	certChains = []string{}
-	// certDnsNames = []string{}
+	certDnsNames = []string{}
 
 	var dnsEnd, connectEnd, tlsEnd, wroteRequestTime, firstByteTime time.Time
 	var remoteIP string
@@ -384,7 +383,7 @@ func diagnoseSite(targetURL string) Response {
 				} else {
 					verStr = "TLS 1.1"
 				}
-				globalWarnings = append(globalWarnings, fmt.Sprintf("Weak Protocol %s Detected", verStr))
+				tlsWarnings = append(tlsWarnings, fmt.Sprintf("Weak Protocol %s Detected", verStr))
 			}
 
 			// 2. Check Cipher Suite
@@ -397,7 +396,7 @@ func diagnoseSite(targetURL string) Response {
 				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA:
 
 				suiteName := tls.CipherSuiteName(state.CipherSuite)
-				globalWarnings = append(globalWarnings, fmt.Sprintf("weak cipher suite detected (%s)", suiteName))
+				tlsWarnings = append(tlsWarnings, fmt.Sprintf("weak cipher suite detected (%s)", suiteName))
 			}
 
 			// 3. Verify Certificate
@@ -418,11 +417,11 @@ func diagnoseSite(targetURL string) Response {
 				certExpiryStr = leafCert.NotAfter.Format(time.RFC3339)
 				certSubject = leafCert.Subject.String()
 				certIssuer = leafCert.Issuer.String()
-				// certDnsNames = leafCert.DNSNames
+				certDnsNames = leafCert.DNSNames
 
 				daysLeft = int(time.Until(leafCert.NotAfter).Hours() / 24.0)
 				if daysLeft <= 30.0 && daysLeft > 0 {
-					globalWarnings = append(globalWarnings, fmt.Sprintf("certificate will expire %d days left (%s)", daysLeft, certExpiryStr))
+					tlsWarnings = append(tlsWarnings, fmt.Sprintf("certificate will expire %d days left (%s)", daysLeft, certExpiryStr))
 				} else if daysLeft <= 0 {
 					errCertMsg = fmt.Sprintf("certificate has expired (%s)", certExpiryStr)
 				}
@@ -466,11 +465,7 @@ func diagnoseSite(targetURL string) Response {
 			Http: Http{
 				Status:     "error",
 				StatusCode: 0,
-			},
-			Message: Message{
-				Error: Error{
-					ErrorHttp: errHttpMsg,
-				},
+				ErrorHttp:  errHttpMsg,
 			},
 		}
 	}
@@ -499,11 +494,7 @@ func diagnoseSite(targetURL string) Response {
 			Http: Http{
 				Status:     "error",
 				StatusCode: 0,
-			},
-			Message: Message{
-				Error: Error{
-					ErrorHttp: errHttpMsg,
-				},
+				ErrorHttp:  errHttpMsg,
 			},
 		}
 	}
@@ -602,32 +593,39 @@ func diagnoseSite(targetURL string) Response {
 			IP:       remoteIP,
 		},
 		DNS: Dns{
-			Status: dnsStatus,
+			Status:   dnsStatus,
+			ErrorDns: errDnsMsg,
 		},
 		TCP: Tcp{
-			Status: tcpStatus,
-			Port:   port,
+			Status:    tcpStatus,
+			Port:      port,
+			ErrorConn: errConnMsg,
 		},
 		TLS: TLSConfig{
-			Status:  tlsStatus,
-			SNI:     hostname,
-			Version: establishedTLSVersion,
-			Cipher:  establishedCipherSuite,
-			ALPN:    establishedALPNProtocol,
+			Status:      tlsStatus,
+			SNI:         hostname,
+			Version:     establishedTLSVersion,
+			Cipher:      establishedCipherSuite,
+			ALPN:        establishedALPNProtocol,
+			ErrorTls:    errTlsMsg,
+			TlsWarnings: tlsWarnings,
 		},
 		Certificate: Certificate{
 			Status:        certStatus,
 			Subject:       certSubject,
 			Issuer:        certIssuer,
 			Chains:        certChains,
+			DnsNames:      certDnsNames,
 			DaysRemaining: daysLeft,
 			ExpiryDate:    certExpiryStr,
+			ErrorCert:     errCertMsg,
 		},
 		Http: Http{
 			Status:      httpStatus,
 			StatusCode:  statusCode,
 			RedirectUrl: redirectLocation,
 			Version:     httpVersion,
+			ErrorHttp:   errHttpMsg,
 		},
 		Http3: Http3{
 			HTTP3Supported: http3Supported,
@@ -640,15 +638,6 @@ func diagnoseSite(targetURL string) Response {
 			Pretransfer:  ResponseTime{Duration: int(timePretransfer), Status: evaluateTiming("pre", int(timePretransfer))},
 			Ttfb:         ResponseTime{Duration: int(ttfb), Status: evaluateTiming("ttfb", int(ttfb))},
 			Total:        ResponseTime{Duration: int(totalTime), Status: evaluateTiming("total", int(totalTime))},
-		},
-		Message: Message{
-			Warnings: globalWarnings,
-			Error: Error{
-				ErrorDns:  errDnsMsg,
-				ErrorConn: errConnMsg,
-				ErrorTls:  errTlsMsg,
-				ErrorCert: errCertMsg,
-			},
 		},
 	}
 
@@ -716,14 +705,13 @@ func main() {
 	var redirectMessages []RedirectMessage
 	for _, redirect := range allRedirects {
 		redirectMessages = append(redirectMessages, RedirectMessage{
-			URL:      redirect.Site.URL,
-			Warnings: redirect.Message.Warnings,
+			URL: redirect.Site.URL,
 			Error: Error{
-				ErrorDns:  redirect.Message.Error.ErrorDns,
-				ErrorConn: redirect.Message.Error.ErrorConn,
-				ErrorTls:  redirect.Message.Error.ErrorTls,
-				ErrorCert: redirect.Message.Error.ErrorCert,
-				ErrorHttp: redirect.Message.Error.ErrorHttp,
+				ErrorDns:  redirect.DNS.ErrorDns,
+				ErrorConn: redirect.TCP.ErrorConn,
+				ErrorTls:  redirect.TLS.ErrorTls,
+				ErrorCert: redirect.Certificate.ErrorCert,
+				ErrorHttp: redirect.Http.ErrorHttp,
 			},
 		})
 	}
@@ -805,7 +793,7 @@ func main() {
 			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(redirect.DNS.Status))
 			fmt.Printf("%-15s%s\n", "Hostname", redirect.Site.Hostname)
 			fmt.Printf("%-15s%s\n", "IP", redirect.Site.IP)
-			fmt.Printf("%-15s%s\n", "ERROR", redirect.Message.Error.ErrorDns)
+			fmt.Printf("%-15s%s\n", "ERROR", redirect.DNS.ErrorDns)
 			fmt.Printf("\n")
 
 			// TCP
@@ -813,7 +801,7 @@ func main() {
 			fmt.Printf("---\n")
 			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(redirect.TCP.Status))
 			fmt.Printf("%-15s%s\n", "Port", redirect.TCP.Port)
-			fmt.Printf("%-15s%s\n", "ERROR", redirect.Message.Error.ErrorConn)
+			fmt.Printf("%-15s%s\n", "ERROR", redirect.TCP.ErrorConn)
 			fmt.Printf("\n")
 
 			// TLS
@@ -826,7 +814,7 @@ func main() {
 			if redirect.TLS.Status == "ok" {
 				fmt.Printf("%-15s%s\n", "SNI", redirect.TLS.SNI)
 			}
-			fmt.Printf("%-15s%s\n", "ERROR", redirect.Message.Error.ErrorTls)
+			fmt.Printf("%-15s%s\n", "ERROR", redirect.TLS.ErrorTls)
 			fmt.Printf("\n")
 
 			// Certificate
@@ -842,7 +830,7 @@ func main() {
 			if redirect.TLS.Status == "ok" {
 				fmt.Printf("%-15s%d\n", "Days Left", redirect.Certificate.DaysRemaining)
 			}
-			fmt.Printf("%-15s%s\n", "ERROR", redirect.Message.Error.ErrorCert)
+			fmt.Printf("%-15s%s\n", "ERROR", redirect.Certificate.ErrorCert)
 			fmt.Printf("\n")
 
 			// HTTP
@@ -854,7 +842,7 @@ func main() {
 				fmt.Printf("%-15s%d\n", "Status", redirect.Http.StatusCode)
 			}
 			fmt.Printf("%-15s%s\n", "Redirect", redirect.Http.RedirectUrl)
-			fmt.Printf("%-15s%s\n", "ERROR", redirect.Message.Error.ErrorHttp)
+			fmt.Printf("%-15s%s\n", "ERROR", redirect.Http.ErrorHttp)
 			fmt.Printf("\n")
 
 			// HTTP/3
