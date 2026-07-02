@@ -18,7 +18,7 @@ import (
 	"golang.org/x/net/http2"
 )
 
-type Summary struct {
+type Overall struct {
 	Scan         Scan           `json:"scan"`
 	Site         Site           `json:"site"`
 	DNS          Dns            `json:"dns"`
@@ -29,12 +29,12 @@ type Summary struct {
 	Http         Http           `json:"http"`
 	RedirectUrls []string       `json:"redirect_urls,omitempty"`
 	Http3        Http3          `json:"http3"`
-	Message      SummaryMessage `json:"message"`
+	Message      OverallMessage `json:"message"`
 }
 
 type DiagnosticResult struct {
-	Summary Summary    `json:"summary"`
-	Details []Response `json:"details"`
+	Overall   Overall    `json:"overall"`
+	Redirects []Response `json:"redirects"`
 }
 
 type Response struct {
@@ -127,7 +127,7 @@ type RedirectMessage struct {
 	Error    Error    `json:"error"`
 }
 
-type SummaryMessage struct {
+type OverallMessage struct {
 	PerRedirect []RedirectMessage `json:"per_redirect"`
 }
 
@@ -659,14 +659,14 @@ func main() {
 	initialURL := args[0]
 
 	// Track redirect
-	var allDetails []Response
+	var allRedirects []Response
 	var redirectUrls []string
 	currentURL := initialURL
 	maxRedirects := 10
 
 	for i := 0; i < maxRedirects; i++ {
 		result := diagnoseSite(currentURL)
-		allDetails = append(allDetails, result)
+		allRedirects = append(allRedirects, result)
 
 		if result.Http.RedirectUrl != "" {
 			redirectUrls = append(redirectUrls, result.Http.RedirectUrl)
@@ -676,21 +676,21 @@ func main() {
 		}
 	}
 
-	// Define Summary Variable
-	firstResult := allDetails[0]
-	lastResult := allDetails[len(allDetails)-1]
+	// Define Overall Variable
+	firstResult := allRedirects[0]
+	lastResult := allRedirects[len(allRedirects)-1]
 
-	// Calculate Summary Duration
+	// Calculate Overall Duration
 	var totalDuration int
 	var totalDnsLookupDuration, totalTcpConnectDuration, totalTlsHandshakeDuration, totalPretransferDuration, totalTtfbDuration, totalTimingsTotalDuration int
-	for _, detail := range allDetails {
-		totalDuration += detail.Scan.Duration
-		totalDnsLookupDuration += detail.TimingsMs.DnsLookup.Duration
-		totalTcpConnectDuration += detail.TimingsMs.TcpConnect.Duration
-		totalTlsHandshakeDuration += detail.TimingsMs.TlsHandshake.Duration
-		totalPretransferDuration += detail.TimingsMs.Pretransfer.Duration
-		totalTtfbDuration += detail.TimingsMs.Ttfb.Duration
-		totalTimingsTotalDuration += detail.TimingsMs.Total.Duration
+	for _, redirect := range allRedirects {
+		totalDuration += redirect.Scan.Duration
+		totalDnsLookupDuration += redirect.TimingsMs.DnsLookup.Duration
+		totalTcpConnectDuration += redirect.TimingsMs.TcpConnect.Duration
+		totalTlsHandshakeDuration += redirect.TimingsMs.TlsHandshake.Duration
+		totalPretransferDuration += redirect.TimingsMs.Pretransfer.Duration
+		totalTtfbDuration += redirect.TimingsMs.Ttfb.Duration
+		totalTimingsTotalDuration += redirect.TimingsMs.Total.Duration
 	}
 
 	// Calcurate Per Status
@@ -704,21 +704,21 @@ func main() {
 
 	// Collect Aggregate Message
 	var redirectMessages []RedirectMessage
-	for _, detail := range allDetails {
+	for _, redirect := range allRedirects {
 		redirectMessages = append(redirectMessages, RedirectMessage{
-			URL:      detail.Site.URL,
-			Warnings: detail.Message.Warnings,
+			URL:      redirect.Site.URL,
+			Warnings: redirect.Message.Warnings,
 			Error: Error{
-				ErrorDns:  detail.Message.Error.ErrorDns,
-				ErrorConn: detail.Message.Error.ErrorConn,
-				ErrorTls:  detail.Message.Error.ErrorTls,
-				ErrorCert: detail.Message.Error.ErrorCert,
-				ErrorHttp: detail.Message.Error.ErrorHttp,
+				ErrorDns:  redirect.Message.Error.ErrorDns,
+				ErrorConn: redirect.Message.Error.ErrorConn,
+				ErrorTls:  redirect.Message.Error.ErrorTls,
+				ErrorCert: redirect.Message.Error.ErrorCert,
+				ErrorHttp: redirect.Message.Error.ErrorHttp,
 			},
 		})
 	}
 
-	summary := Summary{
+	overall := Overall{
 		Scan: Scan{
 			StartTime: firstResult.Scan.StartTime,
 			EndTime:   lastResult.Scan.EndTime,
@@ -746,7 +746,7 @@ func main() {
 			Ttfb:         ResponseTime{Duration: totalTtfbDuration, Status: totalTtfbStatus},
 			Total:        ResponseTime{Duration: totalTimingsTotalDuration, Status: totalTimingsTotalStatus},
 		},
-		Message: SummaryMessage{
+		Message: OverallMessage{
 			PerRedirect: redirectMessages,
 		},
 		Http:         lastResult.Http,
@@ -755,8 +755,8 @@ func main() {
 	}
 
 	diagnosticResult := DiagnosticResult{
-		Summary: summary,
-		Details: allDetails,
+		Overall:   overall,
+		Redirects: allRedirects,
 	}
 
 	// JSON Mode
@@ -776,101 +776,101 @@ func main() {
 
 	// Verbose Mode
 	if *verboseFlag {
-		for i, detail := range allDetails {
+		for i, redirect := range allRedirects {
 			// Time
 			fmt.Printf("Time\n")
 			fmt.Printf("----\n")
-			fmt.Printf("%s\n", detail.Scan.StartTime)
+			fmt.Printf("%s\n", redirect.Scan.StartTime)
 			fmt.Printf("\n")
 
 			// URL
 			fmt.Printf("URL\n")
 			fmt.Printf("---\n")
-			fmt.Printf("%s\n", detail.Site.URL)
+			fmt.Printf("%s\n", redirect.Site.URL)
 			fmt.Printf("\n")
 
 			// DNS
 			fmt.Printf("DNS\n")
 			fmt.Printf("---\n")
-			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.DNS.Status))
-			fmt.Printf("%-15s%s\n", "Hostname", detail.Site.Hostname)
-			fmt.Printf("%-15s%s\n", "IP", detail.Site.IP)
-			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorDns)
+			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(redirect.DNS.Status))
+			fmt.Printf("%-15s%s\n", "Hostname", redirect.Site.Hostname)
+			fmt.Printf("%-15s%s\n", "IP", redirect.Site.IP)
+			fmt.Printf("%-15s%s\n", "ERROR", redirect.Message.Error.ErrorDns)
 			fmt.Printf("\n")
 
 			// TCP
 			fmt.Printf("TCP\n")
 			fmt.Printf("---\n")
-			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.TCP.Status))
-			fmt.Printf("%-15s%s\n", "Port", detail.TCP.Port)
-			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorConn)
+			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(redirect.TCP.Status))
+			fmt.Printf("%-15s%s\n", "Port", redirect.TCP.Port)
+			fmt.Printf("%-15s%s\n", "ERROR", redirect.Message.Error.ErrorConn)
 			fmt.Printf("\n")
 
 			// TLS
 			fmt.Printf("TLS\n")
 			fmt.Printf("---\n")
-			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.TLS.Status))
-			fmt.Printf("%-15s%s\n", "Version", detail.TLS.Version)
-			fmt.Printf("%-15s%s\n", "ALPN", detail.TLS.ALPN)
-			fmt.Printf("%-15s%s\n", "Cipher", detail.TLS.Cipher)
-			if detail.TLS.Status == "ok" {
-				fmt.Printf("%-15s%s\n", "SNI", detail.TLS.SNI)
+			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(redirect.TLS.Status))
+			fmt.Printf("%-15s%s\n", "Version", redirect.TLS.Version)
+			fmt.Printf("%-15s%s\n", "ALPN", redirect.TLS.ALPN)
+			fmt.Printf("%-15s%s\n", "Cipher", redirect.TLS.Cipher)
+			if redirect.TLS.Status == "ok" {
+				fmt.Printf("%-15s%s\n", "SNI", redirect.TLS.SNI)
 			}
-			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorTls)
+			fmt.Printf("%-15s%s\n", "ERROR", redirect.Message.Error.ErrorTls)
 			fmt.Printf("\n")
 
 			// Certificate
 			fmt.Printf("Certificate\n")
 			fmt.Printf("-----------\n")
-			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.Certificate.Status))
-			fmt.Printf("%-15s%s\n", "Subject", detail.Certificate.Subject)
-			fmt.Printf("%-15s%s\n", "Issuer", detail.Certificate.Issuer)
-			for num, certificate := range detail.Certificate.Chains {
+			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(redirect.Certificate.Status))
+			fmt.Printf("%-15s%s\n", "Subject", redirect.Certificate.Subject)
+			fmt.Printf("%-15s%s\n", "Issuer", redirect.Certificate.Issuer)
+			for num, certificate := range redirect.Certificate.Chains {
 				fmt.Printf("%s#%-8d %s\n", "Chain", num, certificate)
 			}
-			fmt.Printf("%-15s%s\n", "Expires", detail.Certificate.ExpiryDate)
-			if detail.TLS.Status == "ok" {
-				fmt.Printf("%-15s%d\n", "Days Left", detail.Certificate.DaysRemaining)
+			fmt.Printf("%-15s%s\n", "Expires", redirect.Certificate.ExpiryDate)
+			if redirect.TLS.Status == "ok" {
+				fmt.Printf("%-15s%d\n", "Days Left", redirect.Certificate.DaysRemaining)
 			}
-			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorCert)
+			fmt.Printf("%-15s%s\n", "ERROR", redirect.Message.Error.ErrorCert)
 			fmt.Printf("\n")
 
 			// HTTP
 			fmt.Printf("HTTP\n")
 			fmt.Printf("----\n")
-			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(detail.Http.Status))
-			fmt.Printf("%-15s%s\n", "Version", detail.Http.Version)
-			if detail.Http.StatusCode != 0 {
-				fmt.Printf("%-15s%d\n", "Status", detail.Http.StatusCode)
+			fmt.Printf("%-15s%s\n", "Status", strings.ToUpper(redirect.Http.Status))
+			fmt.Printf("%-15s%s\n", "Version", redirect.Http.Version)
+			if redirect.Http.StatusCode != 0 {
+				fmt.Printf("%-15s%d\n", "Status", redirect.Http.StatusCode)
 			}
-			fmt.Printf("%-15s%s\n", "Redirect", detail.Http.RedirectUrl)
-			fmt.Printf("%-15s%s\n", "ERROR", detail.Message.Error.ErrorHttp)
+			fmt.Printf("%-15s%s\n", "Redirect", redirect.Http.RedirectUrl)
+			fmt.Printf("%-15s%s\n", "ERROR", redirect.Message.Error.ErrorHttp)
 			fmt.Printf("\n")
 
 			// HTTP/3
 			fmt.Printf("HTTP/3\n")
 			fmt.Printf("------\n")
 			fmt.Printf("")
-			fmt.Printf("%-15s%s\n", "Supported", strings.ToUpper(detail.Http3.HTTP3Supported))
-			fmt.Printf("%-15s%s\n", "Alt-Svc", detail.Http3.AltSvc)
+			fmt.Printf("%-15s%s\n", "Supported", strings.ToUpper(redirect.Http3.HTTP3Supported))
+			fmt.Printf("%-15s%s\n", "Alt-Svc", redirect.Http3.AltSvc)
 			fmt.Printf("\n")
 
 			// Timings
 			fmt.Printf("Timinigs\n")
 			fmt.Printf("--------\n")
-			fmt.Printf("%-8s%10d ms  (%s)\n", "DNS", detail.TimingsMs.DnsLookup.Duration, strings.ToUpper(detail.TimingsMs.DnsLookup.Status))
-			fmt.Printf("%-8s%10d ms  (%s)\n", "TCP", detail.TimingsMs.TcpConnect.Duration, strings.ToUpper(detail.TimingsMs.TcpConnect.Status))
-			fmt.Printf("%-8s%10d ms  (%s)\n", "TLS", detail.TimingsMs.TlsHandshake.Duration, strings.ToUpper(detail.TimingsMs.TlsHandshake.Status))
-			fmt.Printf("%-8s%10d ms  (%s)\n", "PRE", detail.TimingsMs.Pretransfer.Duration, strings.ToUpper(detail.TimingsMs.Pretransfer.Status))
-			fmt.Printf("%-8s%10d ms  (%s)\n", "TTFB", detail.TimingsMs.Ttfb.Duration, strings.ToUpper(summary.TimingsMs.Ttfb.Status))
-			fmt.Printf("%-8s%10d ms\n", "Total", detail.TimingsMs.Total.Duration)
+			fmt.Printf("%-8s%10d ms  (%s)\n", "DNS", redirect.TimingsMs.DnsLookup.Duration, strings.ToUpper(redirect.TimingsMs.DnsLookup.Status))
+			fmt.Printf("%-8s%10d ms  (%s)\n", "TCP", redirect.TimingsMs.TcpConnect.Duration, strings.ToUpper(redirect.TimingsMs.TcpConnect.Status))
+			fmt.Printf("%-8s%10d ms  (%s)\n", "TLS", redirect.TimingsMs.TlsHandshake.Duration, strings.ToUpper(redirect.TimingsMs.TlsHandshake.Status))
+			fmt.Printf("%-8s%10d ms  (%s)\n", "PRE", redirect.TimingsMs.Pretransfer.Duration, strings.ToUpper(redirect.TimingsMs.Pretransfer.Status))
+			fmt.Printf("%-8s%10d ms  (%s)\n", "TTFB", redirect.TimingsMs.Ttfb.Duration, strings.ToUpper(overall.TimingsMs.Ttfb.Status))
+			fmt.Printf("%-8s%10d ms\n", "Total", redirect.TimingsMs.Total.Duration)
 			fmt.Printf("\n")
 
 			// Option: Redirect Arrow
-			if i+1 < len(allDetails) {
+			if i+1 < len(allRedirects) {
 				fmt.Printf("|\n")
 				fmt.Printf("|\n")
-				fmt.Printf("| Redirect: %d\n", detail.Http.StatusCode)
+				fmt.Printf("| Redirect: %d\n", redirect.Http.StatusCode)
 				fmt.Printf("|\n")
 				fmt.Printf("v\n")
 				fmt.Printf("\n")
@@ -881,91 +881,91 @@ func main() {
 	}
 
 	// Default Mode
-	summary = diagnosticResult.Summary
+	overall = diagnosticResult.Overall
 
 	// Site
-	fmt.Printf("%-15s%s\n", "URL", summary.Site.URL)
+	fmt.Printf("%-15s%s\n", "URL", overall.Site.URL)
 
 	// DNS
-	switch summary.DNS.Status {
+	switch overall.DNS.Status {
 	case "ok":
-		fmt.Printf("%-15s%s (%s)\n", "DNS", strings.ToUpper(summary.DNS.Status), summary.Site.IP)
+		fmt.Printf("%-15s%s (%s)\n", "DNS", strings.ToUpper(overall.DNS.Status), overall.Site.IP)
 	case "error":
-		fmt.Printf("%-15s%s\n", "DNS", strings.ToUpper(summary.DNS.Status))
-		fmt.Printf(" %-14s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorDns)
+		fmt.Printf("%-15s%s\n", "DNS", strings.ToUpper(overall.DNS.Status))
+		fmt.Printf(" %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].Error.ErrorDns)
 	default:
-		fmt.Printf("%-15s%s\n", "IP", summary.Site.IP)
+		fmt.Printf("%-15s%s\n", "IP", overall.Site.IP)
 	}
 
 	// TCP
-	switch summary.TCP.Status {
+	switch overall.TCP.Status {
 	case "ok":
-		fmt.Printf("%-15s%s (%s port)\n", "TCP", strings.ToUpper(summary.TCP.Status), summary.TCP.Port)
+		fmt.Printf("%-15s%s (%s port)\n", "TCP", strings.ToUpper(overall.TCP.Status), overall.TCP.Port)
 	case "error":
-		fmt.Printf("%-15s%s (%s port)\n", "TCP", strings.ToUpper(summary.TCP.Status), summary.TCP.Port)
-		fmt.Printf(" %-14s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorConn)
+		fmt.Printf("%-15s%s (%s port)\n", "TCP", strings.ToUpper(overall.TCP.Status), overall.TCP.Port)
+		fmt.Printf(" %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].Error.ErrorConn)
 	}
 
 	// TLS
-	switch summary.TLS.Status {
+	switch overall.TLS.Status {
 	case "ok":
-		fmt.Printf("%-15s%s\n", "TLS", strings.ToUpper(summary.TLS.Status))
-		fmt.Printf(" %-14s%s\n", "Version", summary.TLS.Version)
-		fmt.Printf(" %-14s%s\n", "Cipher", summary.TLS.Cipher)
+		fmt.Printf("%-15s%s\n", "TLS", strings.ToUpper(overall.TLS.Status))
+		fmt.Printf(" %-14s%s\n", "Version", overall.TLS.Version)
+		fmt.Printf(" %-14s%s\n", "Cipher", overall.TLS.Cipher)
 	case "error":
-		fmt.Printf("%-15s%s\n", "TLS", strings.ToUpper(summary.TLS.Status))
-		fmt.Printf(" %-14s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorTls)
+		fmt.Printf("%-15s%s\n", "TLS", strings.ToUpper(overall.TLS.Status))
+		fmt.Printf(" %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].Error.ErrorTls)
 	}
 
 	// Certificate
-	switch summary.Certificate.Status {
+	switch overall.Certificate.Status {
 	case "ok":
-		fmt.Printf(" %-14s%s (%d days)\n", "Certificate", strings.ToUpper(summary.Certificate.Status), summary.Certificate.DaysRemaining)
+		fmt.Printf(" %-14s%s (%d days)\n", "Certificate", strings.ToUpper(overall.Certificate.Status), overall.Certificate.DaysRemaining)
 	case "error":
-		fmt.Printf(" %-14s%s\n", "Certificate", strings.ToUpper(summary.Certificate.Status))
-		fmt.Printf("  %-13s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorCert)
+		fmt.Printf(" %-14s%s\n", "Certificate", strings.ToUpper(overall.Certificate.Status))
+		fmt.Printf("  %-13s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].Error.ErrorCert)
 	}
 
 	// HTTP
-	switch summary.Http.Status {
+	switch overall.Http.Status {
 	case "ok":
-		fmt.Printf("%-15s%s\n", "HTTP", strings.ToUpper(summary.Http.Status))
-		fmt.Printf(" %-14s%s\n", "Version", strings.ToUpper(summary.Http.Version))
-		fmt.Printf(" %-14s%d\n", "Status", summary.Http.StatusCode)
-		if len(summary.RedirectUrls) > 0 {
-			fmt.Printf(" %-14s%s\n", "Redirect", summary.RedirectUrls)
+		fmt.Printf("%-15s%s\n", "HTTP", strings.ToUpper(overall.Http.Status))
+		fmt.Printf(" %-14s%s\n", "Version", strings.ToUpper(overall.Http.Version))
+		fmt.Printf(" %-14s%d\n", "Status", overall.Http.StatusCode)
+		if len(overall.RedirectUrls) > 0 {
+			fmt.Printf(" %-14s%s\n", "Redirect", overall.RedirectUrls)
 		} else {
 			fmt.Printf(" %-14s%s\n", "Redirect", "None")
 		}
 	case "error":
-		fmt.Printf("%-15s%s\n", "HTTP", summary.Http.Version)
-		fmt.Printf(" %-14s%s\n", "Reason", summary.Message.PerRedirect[len(summary.Message.PerRedirect)-1].Error.ErrorHttp)
+		fmt.Printf("%-15s%s\n", "HTTP", overall.Http.Version)
+		fmt.Printf(" %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].Error.ErrorHttp)
 	}
 
 	// Timings
-	if summary.DNS.Status == "ok" || summary.DNS.Status == "unused" {
+	if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
 		fmt.Printf("Timings\n")
 	}
 
 	// DNS
-	if summary.DNS.Status == "ok" {
-		fmt.Printf(" %-8s%6d ms  (%s)\n", "DNS", summary.TimingsMs.DnsLookup.Duration, strings.ToUpper(summary.TimingsMs.DnsLookup.Status))
+	if overall.DNS.Status == "ok" {
+		fmt.Printf(" %-8s%6d ms  (%s)\n", "DNS", overall.TimingsMs.DnsLookup.Duration, strings.ToUpper(overall.TimingsMs.DnsLookup.Status))
 	}
 
 	// TCP
-	if summary.DNS.Status == "ok" || summary.DNS.Status == "unused" {
-		fmt.Printf(" %-8s%6d ms  (%s)\n", "TCP", summary.TimingsMs.TcpConnect.Duration, strings.ToUpper(summary.TimingsMs.TcpConnect.Status))
+	if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
+		fmt.Printf(" %-8s%6d ms  (%s)\n", "TCP", overall.TimingsMs.TcpConnect.Duration, strings.ToUpper(overall.TimingsMs.TcpConnect.Status))
 	}
 
 	// TLS or TTFB
-	if summary.TCP.Status == "ok" {
-		fmt.Printf(" %-8s%6d ms  (%s)\n", "TLS", summary.TimingsMs.TlsHandshake.Duration, strings.ToUpper(summary.TimingsMs.TlsHandshake.Status))
-		fmt.Printf(" %-8s%6d ms  (%s)\n", "TTFB", summary.TimingsMs.Ttfb.Duration, strings.ToUpper(summary.TimingsMs.Ttfb.Status))
+	if overall.TCP.Status == "ok" {
+		fmt.Printf(" %-8s%6d ms  (%s)\n", "TLS", overall.TimingsMs.TlsHandshake.Duration, strings.ToUpper(overall.TimingsMs.TlsHandshake.Status))
+		fmt.Printf(" %-8s%6d ms  (%s)\n", "TTFB", overall.TimingsMs.Ttfb.Duration, strings.ToUpper(overall.TimingsMs.Ttfb.Status))
 	}
 
 	// Total
-	if summary.DNS.Status == "ok" || summary.DNS.Status == "unused" {
-		fmt.Printf(" %-8s%6d ms\n", "Total", summary.TimingsMs.Total.Duration)
+	if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
+		fmt.Printf(" %-8s%6d ms\n", "Total", overall.TimingsMs.Total.Duration)
 	}
 
 	fmt.Printf("\n")
