@@ -150,12 +150,12 @@ type OverallMessage struct {
 
 type OverallWarinings struct {
 	URL      string   `json:"url"`
-	Warnings Warnings `json:"overall_warnings"`
+	Warnings Warnings `json:"warnings"`
 }
 
 type OverallErros struct {
 	URL   string `json:"url"`
-	Error Error  `json:"overall_errors"`
+	Error Error  `json:"errors"`
 }
 
 func evaluateTiming(diagType string, diagDuration int) string {
@@ -406,7 +406,7 @@ func diagnoseSite(targetURL string) Response {
 				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA:
 
 				suiteName := tls.CipherSuiteName(state.CipherSuite)
-				tlsWarnings = append(tlsWarnings, fmt.Sprintf("weak cipher suite detected (%s)", suiteName))
+				tlsWarnings = append(tlsWarnings, fmt.Sprintf("Weak Cipher Suite Detected (%s)", suiteName))
 			}
 
 			// 3. Verify Certificate
