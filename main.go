@@ -711,6 +711,9 @@ func printVerbose(allRedirects []Response, overall Overall) {
 			fmt.Printf("%-15s%s\n", "SNI", redirect.TLS.SNI)
 		}
 		fmt.Printf("%-15s%s\n", "ERROR", redirect.TLS.ErrorTls)
+		for num, warning := range redirect.TLS.TlsWarnings {
+			fmt.Printf("%s#%-6d %s\n", "Warning", num, warning)
+		}
 		fmt.Printf("\n")
 
 		// Certificate
