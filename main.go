@@ -116,6 +116,18 @@ type Timings struct {
 	Total        ResponseTime `json:"total"`
 }
 
+type Warnings struct {
+	TlsWarnings []string `json:"tlsWarnings"`
+}
+
+type Error struct {
+	ErrorDns  string `json:"dnsError"`
+	ErrorConn string `json:"tcpError"`
+	ErrorTls  string `json:"tlsError"`
+	ErrorCert string `json:"certError"`
+	ErrorHttp string `json:"httpError"`
+}
+
 type ResponseTime struct {
 	Duration int    `json:"duration"`
 	Status   string `json:"status"`
@@ -126,26 +138,24 @@ type Message struct {
 	Error    Error    `json:"error"`
 }
 
-type Warning struct {
-	TlsWarnings []string `json:"warnings"`
-}
-
 type RedirectMessage struct {
-	URL      string   `json:"url"`
-	Warnings []string `json:"warnings"`
-	Error    Error    `json:"error"`
+	URL             string           `json:"url"`
+	OverallWarnings OverallWarinings `json:"overall_warnings"`
+	OverallErrors   OverallErros     `json:"overall_errors"`
 }
 
 type OverallMessage struct {
 	PerRedirect []RedirectMessage `json:"per_redirect"`
 }
 
-type Error struct {
-	ErrorDns  string `json:"dnsError"`
-	ErrorConn string `json:"tcpError"`
-	ErrorTls  string `json:"tlsError"`
-	ErrorCert string `json:"certError"`
-	ErrorHttp string `json:"httpError"`
+type OverallWarinings struct {
+	URL      string   `json:"url"`
+	Warnings Warnings `json:"overall_warnings"`
+}
+
+type OverallErros struct {
+	URL   string `json:"url"`
+	Error Error  `json:"overall_errors"`
 }
 
 func evaluateTiming(diagType string, diagDuration int) string {
@@ -706,12 +716,21 @@ func main() {
 	for _, redirect := range allRedirects {
 		redirectMessages = append(redirectMessages, RedirectMessage{
 			URL: redirect.Site.URL,
-			Error: Error{
-				ErrorDns:  redirect.DNS.ErrorDns,
-				ErrorConn: redirect.TCP.ErrorConn,
-				ErrorTls:  redirect.TLS.ErrorTls,
-				ErrorCert: redirect.Certificate.ErrorCert,
-				ErrorHttp: redirect.Http.ErrorHttp,
+			OverallWarnings: OverallWarinings{
+				URL: redirect.Site.URL,
+				Warnings: Warnings{
+					TlsWarnings: redirect.TLS.TlsWarnings,
+				},
+			},
+			OverallErrors: OverallErros{
+				URL: redirect.Site.URL,
+				Error: Error{
+					ErrorDns:  redirect.DNS.ErrorDns,
+					ErrorConn: redirect.TCP.ErrorConn,
+					ErrorTls:  redirect.TLS.ErrorTls,
+					ErrorCert: redirect.Certificate.ErrorCert,
+					ErrorHttp: redirect.Http.ErrorHttp,
+				},
 			},
 		})
 	}
