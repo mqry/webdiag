@@ -712,7 +712,7 @@ func printVerbose(allRedirects []Response) {
 		}
 		fmt.Printf("%-15s%s\n", "ERROR", redirect.TLS.ErrorTls)
 		for num, warning := range redirect.TLS.TlsWarnings {
-			fmt.Printf("%s#%-6d %s\n", "Warning", num, warning)
+			fmt.Printf("%s#%-6d %s\n", "Warning", num+1, warning)
 		}
 		fmt.Printf("\n")
 
@@ -723,7 +723,7 @@ func printVerbose(allRedirects []Response) {
 		fmt.Printf("%-15s%s\n", "Subject", redirect.Certificate.Subject)
 		fmt.Printf("%-15s%s\n", "Issuer", redirect.Certificate.Issuer)
 		for num, certificate := range redirect.Certificate.Chains {
-			fmt.Printf("%s#%-8d %s\n", "Chain", num, certificate)
+			fmt.Printf("%s#%-8d %s\n", "Chain", num+1, certificate)
 		}
 		fmt.Printf("%-15s%s\n", "Expires", redirect.Certificate.ExpiryDate)
 		if redirect.TLS.Status == "ok" {
@@ -827,7 +827,13 @@ func printDefault(overall Overall) {
 		fmt.Printf(" %-14s%s\n", "Version", strings.ToUpper(overall.Http.Version))
 		fmt.Printf(" %-14s%d\n", "Status", overall.Http.StatusCode)
 		if len(overall.RedirectUrls) > 0 {
-			fmt.Printf(" %-14s%s\n", "Redirect", overall.RedirectUrls)
+			for num, redirectUrl := range overall.RedirectUrls {
+				if len(overall.RedirectUrls) == 1 {
+					fmt.Printf(" %-14s%s\n", "Redirect", redirectUrl)
+				} else {
+					fmt.Printf(" %s#%-4d %s\n", "Redirect", num+1, redirectUrl)
+				}
+			}
 		} else {
 			fmt.Printf(" %-14s%s\n", "Redirect", "None")
 		}
