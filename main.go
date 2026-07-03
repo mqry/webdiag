@@ -752,12 +752,12 @@ func printVerbose(allRedirects []Response, overall Overall) {
 		// Timings
 		fmt.Printf("Timinigs\n")
 		fmt.Printf("--------\n")
-		fmt.Printf("%-8s%10d ms  (%s)\n", "DNS", redirect.TimingsMs.DnsLookup.Duration, strings.ToUpper(redirect.TimingsMs.DnsLookup.Status))
-		fmt.Printf("%-8s%10d ms  (%s)\n", "TCP", redirect.TimingsMs.TcpConnect.Duration, strings.ToUpper(redirect.TimingsMs.TcpConnect.Status))
-		fmt.Printf("%-8s%10d ms  (%s)\n", "TLS", redirect.TimingsMs.TlsHandshake.Duration, strings.ToUpper(redirect.TimingsMs.TlsHandshake.Status))
-		fmt.Printf("%-8s%10d ms  (%s)\n", "PRE", redirect.TimingsMs.Pretransfer.Duration, strings.ToUpper(redirect.TimingsMs.Pretransfer.Status))
-		fmt.Printf("%-8s%10d ms  (%s)\n", "TTFB", redirect.TimingsMs.Ttfb.Duration, strings.ToUpper(overall.TimingsMs.Ttfb.Status))
-		fmt.Printf("%-8s%10d ms\n", "Total", redirect.TimingsMs.Total.Duration)
+		fmt.Printf("%-8s%8d ms  (%s)\n", "DNS", redirect.TimingsMs.DnsLookup.Duration, strings.ToUpper(redirect.TimingsMs.DnsLookup.Status))
+		fmt.Printf("%-8s%8d ms  (%s)\n", "TCP", redirect.TimingsMs.TcpConnect.Duration, strings.ToUpper(redirect.TimingsMs.TcpConnect.Status))
+		fmt.Printf("%-8s%8d ms  (%s)\n", "TLS", redirect.TimingsMs.TlsHandshake.Duration, strings.ToUpper(redirect.TimingsMs.TlsHandshake.Status))
+		fmt.Printf("%-8s%8d ms  (%s)\n", "PRE", redirect.TimingsMs.Pretransfer.Duration, strings.ToUpper(redirect.TimingsMs.Pretransfer.Status))
+		fmt.Printf("%-8s%8d ms  (%s)\n", "TTFB", redirect.TimingsMs.Ttfb.Duration, strings.ToUpper(overall.TimingsMs.Ttfb.Status))
+		fmt.Printf("%-8s%8d ms\n", "Total", redirect.TimingsMs.Total.Duration)
 		fmt.Printf("\n")
 
 		// Option: Redirect Arrow
@@ -840,23 +840,23 @@ func printDefault(overall Overall) {
 
 	// DNS
 	if overall.DNS.Status == "ok" {
-		fmt.Printf(" %-8s%6d ms  (%s)\n", "DNS", overall.TimingsMs.DnsLookup.Duration, strings.ToUpper(overall.TimingsMs.DnsLookup.Status))
+		fmt.Printf(" %-8s%8d ms  (%s)\n", "DNS", overall.TimingsMs.DnsLookup.Duration, strings.ToUpper(overall.TimingsMs.DnsLookup.Status))
 	}
 
 	// TCP
 	if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
-		fmt.Printf(" %-8s%6d ms  (%s)\n", "TCP", overall.TimingsMs.TcpConnect.Duration, strings.ToUpper(overall.TimingsMs.TcpConnect.Status))
+		fmt.Printf(" %-8s%8d ms  (%s)\n", "TCP", overall.TimingsMs.TcpConnect.Duration, strings.ToUpper(overall.TimingsMs.TcpConnect.Status))
 	}
 
 	// TLS or TTFB
 	if overall.TCP.Status == "ok" {
-		fmt.Printf(" %-8s%6d ms  (%s)\n", "TLS", overall.TimingsMs.TlsHandshake.Duration, strings.ToUpper(overall.TimingsMs.TlsHandshake.Status))
-		fmt.Printf(" %-8s%6d ms  (%s)\n", "TTFB", overall.TimingsMs.Ttfb.Duration, strings.ToUpper(overall.TimingsMs.Ttfb.Status))
+		fmt.Printf(" %-8s%8d ms  (%s)\n", "TLS", overall.TimingsMs.TlsHandshake.Duration, strings.ToUpper(overall.TimingsMs.TlsHandshake.Status))
+		fmt.Printf(" %-8s%8d ms  (%s)\n", "TTFB", overall.TimingsMs.Ttfb.Duration, strings.ToUpper(overall.TimingsMs.Ttfb.Status))
 	}
 
 	// Total
 	if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
-		fmt.Printf(" %-8s%6d ms\n", "Total", overall.TimingsMs.Total.Duration)
+		fmt.Printf(" %-8s%8d ms\n", "Total", overall.TimingsMs.Total.Duration)
 	}
 
 	fmt.Printf("\n")
