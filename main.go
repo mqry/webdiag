@@ -891,25 +891,25 @@ func performDiagnosis(initialURL string) DiagnosticResult {
 
 	// Calculate Overall Duration
 	var totalDuration int
-	var totalDnsLookupDuration, totalTcpConnectDuration, totalTlsHandshakeDuration, totalPretransferDuration, totalTtfbDuration, totalTimingsTotalDuration int
+	var totalTimingsDnsDuration, totalTimingsTcpDuration, totalTimingsTlsDuration, totalTimingsPreDuration, totalTimingsTtfbDuration, totalTimingsTotalDuration int
 	for _, redirect := range allRedirects {
 		totalDuration += redirect.Scan.Duration
-		totalDnsLookupDuration += redirect.TimingsMs.DnsLookup.Duration
-		totalTcpConnectDuration += redirect.TimingsMs.TcpConnect.Duration
-		totalTlsHandshakeDuration += redirect.TimingsMs.TlsHandshake.Duration
-		totalPretransferDuration += redirect.TimingsMs.Pretransfer.Duration
-		totalTtfbDuration += redirect.TimingsMs.Ttfb.Duration
+		totalTimingsDnsDuration += redirect.TimingsMs.DnsLookup.Duration
+		totalTimingsTcpDuration += redirect.TimingsMs.TcpConnect.Duration
+		totalTimingsTlsDuration += redirect.TimingsMs.TlsHandshake.Duration
+		totalTimingsPreDuration += redirect.TimingsMs.Pretransfer.Duration
+		totalTimingsTtfbDuration += redirect.TimingsMs.Ttfb.Duration
 		totalTimingsTotalDuration += redirect.TimingsMs.Total.Duration
 	}
 
 	// Calcurate Per Status
-	var totalDnsLookupStatus, totalTcpConnectStatus, totalTlsHandshakeStatus, totalPretransferStatus, totalTtfbStatus, totalTimingsTotalStatus string
-	totalDnsLookupStatus = evaluateTiming("dns", totalDnsLookupDuration)
-	totalTcpConnectStatus = evaluateTiming("tcp", totalTcpConnectDuration)
-	totalTlsHandshakeStatus = evaluateTiming("tls", totalTlsHandshakeDuration)
-	totalPretransferStatus = evaluateTiming("pre", totalPretransferDuration)
-	totalTtfbStatus = evaluateTiming("ttfb", totalTtfbDuration)
-	totalTimingsTotalStatus = evaluateTiming("total", totalTimingsTotalDuration)
+	var totalTimingsDnsStatus, totalTimingsTcpStatus, totalTimingsTlsStatus, totalTimingsPreStatus, totalTimingsTtfbStatus, totalTimingsTotalStatus string
+	totalTimingsDnsStatus = evaluateTiming("dns", totalTimingsDnsDuration)
+	totalTimingsTcpStatus = evaluateTiming("tcp", totalTimingsTcpDuration)
+	totalTimingsTlsStatus = evaluateTiming("tls", totalTimingsTlsDuration)
+	totalTimingsPreStatus = evaluateTiming("pre", totalTimingsPreDuration)
+	totalTimingsTtfbStatus = evaluateTiming("ttfb", totalTimingsTtfbDuration)
+	totalTimingsTotalStatus = evaluateTiming("totalTimings", totalTimingsTotalDuration)
 
 	// Collect Aggregate Message
 	var redirectMessages []RedirectMessage
@@ -956,11 +956,11 @@ func performDiagnosis(initialURL string) DiagnosticResult {
 		TLS:         lastResult.TLS,
 		Certificate: lastResult.Certificate,
 		TimingsMs: Timings{
-			DnsLookup:    ResponseTime{Duration: totalDnsLookupDuration, Status: totalDnsLookupStatus},
-			TcpConnect:   ResponseTime{Duration: totalTcpConnectDuration, Status: totalTcpConnectStatus},
-			TlsHandshake: ResponseTime{Duration: totalTlsHandshakeDuration, Status: totalTlsHandshakeStatus},
-			Pretransfer:  ResponseTime{Duration: totalPretransferDuration, Status: totalPretransferStatus},
-			Ttfb:         ResponseTime{Duration: totalTtfbDuration, Status: totalTtfbStatus},
+			DnsLookup:    ResponseTime{Duration: totalTimingsDnsDuration, Status: totalTimingsDnsStatus},
+			TcpConnect:   ResponseTime{Duration: totalTimingsTcpDuration, Status: totalTimingsTcpStatus},
+			TlsHandshake: ResponseTime{Duration: totalTimingsTlsDuration, Status: totalTimingsTlsStatus},
+			Pretransfer:  ResponseTime{Duration: totalTimingsDnsDuration, Status: totalTimingsPreStatus},
+			Ttfb:         ResponseTime{Duration: totalTimingsTtfbDuration, Status: totalTimingsTtfbStatus},
 			Total:        ResponseTime{Duration: totalTimingsTotalDuration, Status: totalTimingsTotalStatus},
 		},
 		Message: OverallMessage{
