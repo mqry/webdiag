@@ -139,7 +139,6 @@ type Message struct {
 }
 
 type RedirectMessage struct {
-	URL             string           `json:"url"`
 	OverallWarnings OverallWarinings `json:"overall_warnings"`
 	OverallErrors   OverallErros     `json:"overall_errors"`
 }
@@ -921,7 +920,6 @@ func performDiagnosis(initialURL string) DiagnosticResult {
 	var redirectMessages []RedirectMessage
 	for _, redirect := range allRedirects {
 		redirectMessages = append(redirectMessages, RedirectMessage{
-			URL: redirect.Site.URL,
 			OverallWarnings: OverallWarinings{
 				URL: redirect.Site.URL,
 				Warnings: Warnings{
