@@ -669,7 +669,7 @@ func printJSON(diagnosticResult DiagnosticResult) {
 }
 
 // printVerbose outputs detailed diagnostic information for each redirect
-func printVerbose(allRedirects []Response, overall Overall) {
+func printVerbose(allRedirects []Response) {
 	for i, redirect := range allRedirects {
 		// Time
 		fmt.Printf("Time\n")
@@ -759,7 +759,7 @@ func printVerbose(allRedirects []Response, overall Overall) {
 		fmt.Printf("%-8s%8d ms  (%s)\n", "TCP", redirect.TimingsMs.TcpConnect.Duration, strings.ToUpper(redirect.TimingsMs.TcpConnect.Status))
 		fmt.Printf("%-8s%8d ms  (%s)\n", "TLS", redirect.TimingsMs.TlsHandshake.Duration, strings.ToUpper(redirect.TimingsMs.TlsHandshake.Status))
 		fmt.Printf("%-8s%8d ms  (%s)\n", "PRE", redirect.TimingsMs.Pretransfer.Duration, strings.ToUpper(redirect.TimingsMs.Pretransfer.Status))
-		fmt.Printf("%-8s%8d ms  (%s)\n", "TTFB", redirect.TimingsMs.Ttfb.Duration, strings.ToUpper(overall.TimingsMs.Ttfb.Status))
+		fmt.Printf("%-8s%8d ms  (%s)\n", "TTFB", redirect.TimingsMs.Ttfb.Duration, strings.ToUpper(redirect.TimingsMs.Ttfb.Status))
 		fmt.Printf("%-8s%8d ms\n", "Total", redirect.TimingsMs.Total.Duration)
 		fmt.Printf("\n")
 
@@ -865,19 +865,8 @@ func printDefault(overall Overall) {
 	fmt.Printf("\n")
 }
 
-func main() {
-	jsonFlag := flag.Bool("json", false, "Enable JSON output")
-	verboseFlag := flag.Bool("verbose", false, "Enable verbose output")
-	flag.Parse()
-	args := flag.Args()
-
-	if len(args) < 1 {
-		fmt.Println("Usage: webdiag <url>")
-		return
-	}
-
-	initialURL := args[0]
-
+// performDiagnosis executes the diagnostic process and returns the result
+func performDiagnosis(initialURL string) DiagnosticResult {
 	// Track redirect
 	var allRedirects []Response
 	var redirectUrls []string
@@ -982,17 +971,34 @@ func main() {
 		RedirectUrls: redirectUrls,
 	}
 
-	diagnosticResult := DiagnosticResult{
+	return DiagnosticResult{
 		Overall:   overall,
 		Redirects: allRedirects,
 	}
+}
+
+func main() {
+	jsonFlag := flag.Bool("json", false, "Enable JSON output")
+	verboseFlag := flag.Bool("verbose", false, "Enable verbose output")
+	flag.Parse()
+	args := flag.Args()
+
+	if len(args) < 1 {
+		fmt.Println("Usage: webdiag <url>")
+		return
+	}
+
+	initialURL := args[0]
+
+	// Perform diagnosis
+	diagnosticResult := performDiagnosis(initialURL)
 
 	// Output based on flags
 	if *jsonFlag {
 		printJSON(diagnosticResult)
 	} else if *verboseFlag {
-		printVerbose(allRedirects, overall)
+		printVerbose(diagnosticResult.Redirects)
 	} else {
-		printDefault(overall)
+		printDefault(diagnosticResult.Overall)
 	}
 }
