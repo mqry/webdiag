@@ -17,9 +17,9 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/http2"
-
+	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
+	"golang.org/x/net/http2"
 )
 
 type Overall struct {
@@ -1023,6 +1023,7 @@ func main() {
 	var output io.Writer = os.Stdout
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 
+	// less
 	if isTerminal {
 		if lessPath, err := exec.LookPath("less"); err == nil {
 			cmd := exec.Command(lessPath, "-RFX")
@@ -1041,6 +1042,27 @@ func main() {
 			}
 		}
 	}
+
+	// highlight
+	if isTerminal {
+		color.NoColor = false
+	} else {
+		color.NoColor = true
+	}
+
+	// // color function
+	// green := color.New(color.FgGreen).SprintFunc()
+	// yellow := color.New(color.FgYellow).SprintFunc()
+	// cyan := color.New(color.FgCyan).SprintFunc()
+
+	// // create colored data
+	// lines := strings.Split(result, "\n")
+	// for line := range lines {
+	// 	line += fmt.Sprintf(
+	// 		green("SUCCESS"),
+	// 		cyan("highlight"),
+	// 	)
+	// }
 
 	fmt.Fprint(output, result)
 }
