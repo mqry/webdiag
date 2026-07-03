@@ -179,7 +179,7 @@ func evaluateTiming(diagType string, diagDuration int) string {
 			return "-"
 		case diagDuration > 0 && diagDuration <= 10:
 			return "good"
-		case diagDuration > 10 && diagDuration <= 30:
+		case diagDuration > 10 && diagDuration <= 50:
 			return "ok"
 		case diagDuration > 50 && diagDuration <= 100:
 			return "warn"
