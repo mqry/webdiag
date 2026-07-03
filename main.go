@@ -837,7 +837,7 @@ func printDefault(overall Overall) {
 			fmt.Printf(" %-14s%s\n", "Redirect", "None")
 		}
 	case "error":
-		fmt.Printf("%-15s%s\n", "HTTP", overall.Http.Version)
+		fmt.Printf("%-15s%s\n", "HTTP", strings.ToUpper(overall.Http.Status))
 		fmt.Printf(" %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorHttp)
 	}
 
