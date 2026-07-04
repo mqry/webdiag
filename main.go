@@ -811,7 +811,7 @@ func printDefault(overall Overall, isColor bool) string {
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("DNS"), errColor(upper(overall.DNS.Status)))
 			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorDns))
 		default:
-			fmt.Fprintf(&b, "%-24s%s\n", "IP", valColor(valColor(overall.Site.IP)))
+			fmt.Fprintf(&b, "%-24s%s\n", "IP", (valColor(overall.Site.IP)))
 		}
 
 		// TCP
