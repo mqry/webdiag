@@ -659,6 +659,10 @@ func diagnoseSite(targetURL string) Response {
 	return metrics
 }
 
+func upper(s string) string {
+	return strings.ToUpper(s)
+}
+
 // printJSON outputs the diagnostic result in JSON format
 func printJSON(diagnosticResult DiagnosticResult) string {
 	var buf bytes.Buffer
@@ -693,7 +697,7 @@ func printVerbose(allRedirects []Response) string {
 		// DNS
 		fmt.Fprintf(&b, "DNS\n")
 		fmt.Fprintf(&b, "---\n")
-		fmt.Fprintf(&b, "%-15s%s\n", "Status", strings.ToUpper(redirect.DNS.Status))
+		fmt.Fprintf(&b, "%-15s%s\n", "Status", upper(redirect.DNS.Status))
 		fmt.Fprintf(&b, "%-15s%s\n", "Hostname", redirect.Site.Hostname)
 		fmt.Fprintf(&b, "%-15s%s\n", "IP", redirect.Site.IP)
 		fmt.Fprintf(&b, "%-15s%s\n", "ERROR", redirect.DNS.ErrorDns)
@@ -702,7 +706,7 @@ func printVerbose(allRedirects []Response) string {
 		// TCP
 		fmt.Fprintf(&b, "TCP\n")
 		fmt.Fprintf(&b, "---\n")
-		fmt.Fprintf(&b, "%-15s%s\n", "Status", strings.ToUpper(redirect.TCP.Status))
+		fmt.Fprintf(&b, "%-15s%s\n", "Status", upper(redirect.TCP.Status))
 		fmt.Fprintf(&b, "%-15s%s\n", "Port", redirect.TCP.Port)
 		fmt.Fprintf(&b, "%-15s%s\n", "ERROR", redirect.TCP.ErrorConn)
 		fmt.Fprintf(&b, "\n")
@@ -710,7 +714,7 @@ func printVerbose(allRedirects []Response) string {
 		// TLS
 		fmt.Fprintf(&b, "TLS\n")
 		fmt.Fprintf(&b, "---\n")
-		fmt.Fprintf(&b, "%-15s%s\n", "Status", strings.ToUpper(redirect.TLS.Status))
+		fmt.Fprintf(&b, "%-15s%s\n", "Status", upper(redirect.TLS.Status))
 		fmt.Fprintf(&b, "%-15s%s\n", "Version", redirect.TLS.Version)
 		fmt.Fprintf(&b, "%-15s%s\n", "ALPN", redirect.TLS.ALPN)
 		fmt.Fprintf(&b, "%-15s%s\n", "Cipher", redirect.TLS.Cipher)
@@ -726,7 +730,7 @@ func printVerbose(allRedirects []Response) string {
 		// Certificate
 		fmt.Fprintf(&b, "Certificate\n")
 		fmt.Fprintf(&b, "-----------\n")
-		fmt.Fprintf(&b, "%-15s%s\n", "Status", strings.ToUpper(redirect.Certificate.Status))
+		fmt.Fprintf(&b, "%-15s%s\n", "Status", upper(redirect.Certificate.Status))
 		fmt.Fprintf(&b, "%-15s%s\n", "Subject", redirect.Certificate.Subject)
 		fmt.Fprintf(&b, "%-15s%s\n", "Issuer", redirect.Certificate.Issuer)
 		for num, certificate := range redirect.Certificate.Chains {
@@ -742,7 +746,7 @@ func printVerbose(allRedirects []Response) string {
 		// HTTP
 		fmt.Fprintf(&b, "HTTP\n")
 		fmt.Fprintf(&b, "----\n")
-		fmt.Fprintf(&b, "%-15s%s\n", "Status", strings.ToUpper(redirect.Http.Status))
+		fmt.Fprintf(&b, "%-15s%s\n", "Status", upper(redirect.Http.Status))
 		fmt.Fprintf(&b, "%-15s%s\n", "Version", redirect.Http.Version)
 		if redirect.Http.StatusCode != 0 {
 			fmt.Fprintf(&b, "%-15s%d\n", "Status", redirect.Http.StatusCode)
@@ -755,18 +759,18 @@ func printVerbose(allRedirects []Response) string {
 		fmt.Fprintf(&b, "HTTP/3\n")
 		fmt.Fprintf(&b, "------\n")
 		fmt.Fprintf(&b, "")
-		fmt.Fprintf(&b, "%-15s%s\n", "Supported", strings.ToUpper(redirect.Http3.HTTP3Supported))
+		fmt.Fprintf(&b, "%-15s%s\n", "Supported", upper(redirect.Http3.HTTP3Supported))
 		fmt.Fprintf(&b, "%-15s%s\n", "Alt-Svc", redirect.Http3.AltSvc)
 		fmt.Fprintf(&b, "\n")
 
 		// Timings
 		fmt.Fprintf(&b, "Timinigs\n")
 		fmt.Fprintf(&b, "--------\n")
-		fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "DNS", redirect.TimingsMs.DnsLookup.Duration, strings.ToUpper(redirect.TimingsMs.DnsLookup.Status))
-		fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "TCP", redirect.TimingsMs.TcpConnect.Duration, strings.ToUpper(redirect.TimingsMs.TcpConnect.Status))
-		fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "TLS", redirect.TimingsMs.TlsHandshake.Duration, strings.ToUpper(redirect.TimingsMs.TlsHandshake.Status))
-		fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "PRE", redirect.TimingsMs.Pretransfer.Duration, strings.ToUpper(redirect.TimingsMs.Pretransfer.Status))
-		fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "TTFB", redirect.TimingsMs.Ttfb.Duration, strings.ToUpper(redirect.TimingsMs.Ttfb.Status))
+		fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "DNS", redirect.TimingsMs.DnsLookup.Duration, upper(redirect.TimingsMs.DnsLookup.Status))
+		fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "TCP", redirect.TimingsMs.TcpConnect.Duration, upper(redirect.TimingsMs.TcpConnect.Status))
+		fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "TLS", redirect.TimingsMs.TlsHandshake.Duration, upper(redirect.TimingsMs.TlsHandshake.Status))
+		fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "PRE", redirect.TimingsMs.Pretransfer.Duration, upper(redirect.TimingsMs.Pretransfer.Status))
+		fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "TTFB", redirect.TimingsMs.Ttfb.Duration, upper(redirect.TimingsMs.Ttfb.Status))
 		fmt.Fprintf(&b, "%-8s%8d ms\n", "Total", redirect.TimingsMs.Total.Duration)
 		fmt.Fprintf(&b, "\n")
 
@@ -785,102 +789,218 @@ func printVerbose(allRedirects []Response) string {
 }
 
 // printDefault outputs a summary of the diagnostic result
-func printDefault(overall Overall) string {
+func printDefault(overall Overall, isColor bool) string {
+	keyColor := color.New(color.FgHiBlue).SprintFunc()
+	valColor := color.New(color.FgHiGreen).SprintFunc()
+	errColor := color.New(color.FgHiRed).SprintFunc()
+
 	var b strings.Builder
-	// Site
-	fmt.Fprintf(&b, "%-15s%s\n", "URL", overall.Site.URL)
 
-	// DNS
-	switch overall.DNS.Status {
-	case "ok":
-		fmt.Fprintf(&b, "%-15s%s (%s)\n", "DNS", strings.ToUpper(overall.DNS.Status), overall.Site.IP)
-	case "error":
-		fmt.Fprintf(&b, "%-15s%s\n", "DNS", strings.ToUpper(overall.DNS.Status))
-		fmt.Fprintf(&b, " %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorDns)
-	default:
-		fmt.Fprintf(&b, "%-15s%s\n", "IP", overall.Site.IP)
-	}
+	switch isColor {
+	case true:
+		// Site
+		fmt.Fprintf(&b, "%-24s%s\n", keyColor("URL"), valColor(overall.Site.URL))
 
-	// TCP
-	switch overall.TCP.Status {
-	case "ok":
-		fmt.Fprintf(&b, "%-15s%s (%s port)\n", "TCP", strings.ToUpper(overall.TCP.Status), overall.TCP.Port)
-	case "error":
-		fmt.Fprintf(&b, "%-15s%s (%s port)\n", "TCP", strings.ToUpper(overall.TCP.Status), overall.TCP.Port)
-		fmt.Fprintf(&b, " %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorConn)
-	}
-
-	// TLS
-	switch overall.TLS.Status {
-	case "ok":
-		fmt.Fprintf(&b, "%-15s%s\n", "TLS", strings.ToUpper(overall.TLS.Status))
-		fmt.Fprintf(&b, " %-14s%s\n", "Version", overall.TLS.Version)
-		fmt.Fprintf(&b, " %-14s%s\n", "Cipher", overall.TLS.Cipher)
-	case "error":
-		fmt.Fprintf(&b, "%-15s%s\n", "TLS", strings.ToUpper(overall.TLS.Status))
-		fmt.Fprintf(&b, " %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorTls)
-	}
-
-	// Certificate
-	switch overall.Certificate.Status {
-	case "ok":
-		fmt.Fprintf(&b, " %-14s%s (%d days)\n", "Certificate", strings.ToUpper(overall.Certificate.Status), overall.Certificate.DaysRemaining)
-	case "error":
-		fmt.Fprintf(&b, " %-14s%s\n", "Certificate", strings.ToUpper(overall.Certificate.Status))
-		fmt.Fprintf(&b, "  %-13s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorCert)
-	}
-
-	// HTTP
-	switch overall.Http.Status {
-	case "ok":
-		fmt.Fprintf(&b, "%-15s%s\n", "HTTP", strings.ToUpper(overall.Http.Status))
-		fmt.Fprintf(&b, " %-14s%s\n", "Version", strings.ToUpper(overall.Http.Version))
-		fmt.Fprintf(&b, " %-14s%d\n", "Status", overall.Http.StatusCode)
-		if len(overall.RedirectUrls) > 0 {
-			for num, redirectUrl := range overall.RedirectUrls {
-				if len(overall.RedirectUrls) == 1 {
-					fmt.Fprintf(&b, " %-14s%s\n", "Redirect", redirectUrl)
-				} else {
-					fmt.Fprintf(&b, " %s#%-4d %s\n", "Redirect", num+1, redirectUrl)
-				}
-			}
-		} else {
-			fmt.Fprintf(&b, " %-14s%s\n", "Redirect", "None")
+		// DNS
+		ipStr := fmt.Sprintf("(%s)", overall.Site.IP)
+		switch overall.DNS.Status {
+		case "ok":
+			fmt.Fprintf(&b, "%-24s%s %s\n", keyColor("DNS"), valColor(upper(overall.DNS.Status)), valColor(ipStr))
+		case "error":
+			fmt.Fprintf(&b, "%-24s%s\n", keyColor("DNS"), errColor(upper(overall.DNS.Status)))
+			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorDns))
+		default:
+			fmt.Fprintf(&b, "%-24s%s\n", "IP", valColor(valColor(overall.Site.IP)))
 		}
-	case "error":
-		fmt.Fprintf(&b, "%-15s%s\n", "HTTP", strings.ToUpper(overall.Http.Status))
-		fmt.Fprintf(&b, " %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorHttp)
+
+		// TCP
+		portStr := fmt.Sprintf("(%s port)", overall.TCP.Port)
+		switch overall.TCP.Status {
+		case "ok":
+			fmt.Fprintf(&b, "%-24s%s %s\n", keyColor("TCP"), valColor(upper(overall.TCP.Status)), valColor(portStr))
+		case "error":
+			fmt.Fprintf(&b, "%-24s%s %s\n", keyColor("TCP"), errColor(upper(overall.TCP.Status)), errColor(overall.TCP.Port))
+			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorConn))
+		}
+
+		// TLS
+		switch overall.TLS.Status {
+		case "ok":
+			fmt.Fprintf(&b, "%-24s%s\n", keyColor("TLS"), valColor(upper(overall.TLS.Status)))
+			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Version"), valColor(overall.TLS.Version))
+			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Cipher"), valColor(overall.TLS.Cipher))
+		case "error":
+			fmt.Fprintf(&b, "%-24s%s\n", keyColor("TLS"), errColor(upper(overall.TLS.Status)))
+			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorTls))
+		}
+
+		// Certificate
+		daysStr := fmt.Sprintf("(%d days)", overall.Certificate.DaysRemaining)
+		switch overall.Certificate.Status {
+		case "ok":
+			fmt.Fprintf(&b, " %-23s%s %s\n", keyColor("Certificate"), valColor(upper(overall.Certificate.Status)), valColor(daysStr))
+		case "error":
+			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Certificate"), errColor(upper(overall.Certificate.Status)))
+			fmt.Fprintf(&b, "  %-22s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorCert))
+		}
+
+		// HTTP
+		switch overall.Http.Status {
+		case "ok":
+			fmt.Fprintf(&b, "%-24s%s\n", keyColor("HTTP"), valColor(upper(overall.Http.Status)))
+			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Version"), valColor(upper(overall.Http.Version)))
+			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Status"), valColor(overall.Http.StatusCode))
+			if len(overall.RedirectUrls) > 0 {
+				for num, redirectUrl := range overall.RedirectUrls {
+					if len(overall.RedirectUrls) == 1 {
+						fmt.Fprintf(&b, " %-23s%s\n", keyColor(keyColor("Redirect")), valColor(redirectUrl))
+					} else {
+						fmt.Fprintf(&b, " %s#%-4s %s\n", keyColor(keyColor("Redirect")), valColor(num+1), valColor(redirectUrl))
+					}
+				}
+			} else {
+				fmt.Fprintf(&b, " %-23s%s\n", keyColor("Redirect"), valColor("None"))
+			}
+		case "error":
+			fmt.Fprintf(&b, "%-24s%s\n", keyColor("HTTP"), errColor(upper(overall.Http.Status)))
+			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorHttp))
+		}
+
+		// Timings
+		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
+			fmt.Fprint(&b, keyColor("Timings\n"))
+		}
+
+		// DNS
+		timingsDnsDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.DnsLookup.Duration)
+		timingsDnsStatusStr := fmt.Sprintf("(%s)", upper(overall.TimingsMs.DnsLookup.Status))
+		if overall.DNS.Status == "ok" {
+			fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(timingsDnsStatusStr))
+		}
+
+		// TCP
+		timingsTcpDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.TcpConnect.Duration)
+		timingsTcpStatusStr := fmt.Sprintf("(%s)", upper(overall.TimingsMs.TcpConnect.Status))
+		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
+			fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(timingsTcpStatusStr))
+		}
+
+		// TLS or TTFB
+		timingsTlsDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.TlsHandshake.Duration)
+		timingsTlsStatusStr := fmt.Sprintf("(%s)", upper(overall.TimingsMs.TlsHandshake.Status))
+		timingsTtfbDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.Ttfb.Duration)
+		timingsTtfbStatusStr := fmt.Sprintf("(%s)", upper(overall.TimingsMs.Ttfb.Status))
+		if overall.TCP.Status == "ok" {
+			fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(timingsTlsStatusStr))
+			fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(timingsTtfbStatusStr))
+		}
+
+		// Total
+		timingsTotalDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.Total.Duration)
+		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
+			fmt.Fprintf(&b, " %-20s%16s\n", keyColor("Total"), valColor(timingsTotalDurationStr))
+		}
+
+		fmt.Fprintf(&b, "\n")
+
+		return b.String()
+
+	default:
+		// Site
+		fmt.Fprintf(&b, "%-15s%s\n", "URL", overall.Site.URL)
+
+		// DNS
+		switch overall.DNS.Status {
+		case "ok":
+			fmt.Fprintf(&b, "%-15s%s (%s)\n", "DNS", upper(overall.DNS.Status), overall.Site.IP)
+		case "error":
+			fmt.Fprintf(&b, "%-15s%s\n", "DNS", upper(overall.DNS.Status))
+			fmt.Fprintf(&b, " %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorDns)
+		default:
+			fmt.Fprintf(&b, "%-15s%s\n", "IP", overall.Site.IP)
+		}
+
+		// TCP
+		switch overall.TCP.Status {
+		case "ok":
+			fmt.Fprintf(&b, "%-15s%s (%s port)\n", "TCP", upper(overall.TCP.Status), overall.TCP.Port)
+		case "error":
+			fmt.Fprintf(&b, "%-15s%s (%s port)\n", "TCP", upper(overall.TCP.Status), overall.TCP.Port)
+			fmt.Fprintf(&b, " %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorConn)
+		}
+
+		// TLS
+		switch overall.TLS.Status {
+		case "ok":
+			fmt.Fprintf(&b, "%-15s%s\n", "TLS", upper(overall.TLS.Status))
+			fmt.Fprintf(&b, " %-14s%s\n", "Version", overall.TLS.Version)
+			fmt.Fprintf(&b, " %-14s%s\n", "Cipher", overall.TLS.Cipher)
+		case "error":
+			fmt.Fprintf(&b, "%-15s%s\n", "TLS", upper(overall.TLS.Status))
+			fmt.Fprintf(&b, " %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorTls)
+		}
+
+		// Certificate
+		switch overall.Certificate.Status {
+		case "ok":
+			fmt.Fprintf(&b, " %-14s%s (%d days)\n", "Certificate", upper(overall.Certificate.Status), overall.Certificate.DaysRemaining)
+		case "error":
+			fmt.Fprintf(&b, " %-14s%s\n", "Certificate", upper(overall.Certificate.Status))
+			fmt.Fprintf(&b, "  %-13s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorCert)
+		}
+
+		// HTTP
+		switch overall.Http.Status {
+		case "ok":
+			fmt.Fprintf(&b, "%-15s%s\n", "HTTP", upper(overall.Http.Status))
+			fmt.Fprintf(&b, " %-14s%s\n", "Version", upper(overall.Http.Version))
+			fmt.Fprintf(&b, " %-14s%d\n", "Status", overall.Http.StatusCode)
+			if len(overall.RedirectUrls) > 0 {
+				for num, redirectUrl := range overall.RedirectUrls {
+					if len(overall.RedirectUrls) == 1 {
+						fmt.Fprintf(&b, " %-14s%s\n", "Redirect", redirectUrl)
+					} else {
+						fmt.Fprintf(&b, " %s#%-4d %s\n", "Redirect", num+1, redirectUrl)
+					}
+				}
+			} else {
+				fmt.Fprintf(&b, " %-14s%s\n", "Redirect", "None")
+			}
+		case "error":
+			fmt.Fprintf(&b, "%-15s%s\n", "HTTP", upper(overall.Http.Status))
+			fmt.Fprintf(&b, " %-14s%s\n", "Reason", overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorHttp)
+		}
+
+		// Timings
+		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
+			fmt.Fprintf(&b, "Timings\n")
+		}
+
+		// DNS
+		if overall.DNS.Status == "ok" {
+			fmt.Fprintf(&b, " %-7s%8d ms  (%s)\n", "DNS", overall.TimingsMs.DnsLookup.Duration, upper(overall.TimingsMs.DnsLookup.Status))
+		}
+
+		// TCP
+		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
+			fmt.Fprintf(&b, " %-7s%8d ms  (%s)\n", "TCP", overall.TimingsMs.TcpConnect.Duration, upper(overall.TimingsMs.TcpConnect.Status))
+		}
+
+		// TLS or TTFB
+		if overall.TCP.Status == "ok" {
+			fmt.Fprintf(&b, " %-7s%8d ms  (%s)\n", "TLS", overall.TimingsMs.TlsHandshake.Duration, upper(overall.TimingsMs.TlsHandshake.Status))
+			fmt.Fprintf(&b, " %-7s%8d ms  (%s)\n", "TTFB", overall.TimingsMs.Ttfb.Duration, upper(overall.TimingsMs.Ttfb.Status))
+		}
+
+		// Total
+		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
+			fmt.Fprintf(&b, " %-7s%8d ms\n", "Total", overall.TimingsMs.Total.Duration)
+		}
+
+		fmt.Fprintf(&b, "\n")
+
+		return b.String()
 	}
-
-	// Timings
-	if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
-		fmt.Fprintf(&b, "Timings\n")
-	}
-
-	// DNS
-	if overall.DNS.Status == "ok" {
-		fmt.Fprintf(&b, " %-8s%8d ms  (%s)\n", "DNS", overall.TimingsMs.DnsLookup.Duration, strings.ToUpper(overall.TimingsMs.DnsLookup.Status))
-	}
-
-	// TCP
-	if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
-		fmt.Fprintf(&b, " %-8s%8d ms  (%s)\n", "TCP", overall.TimingsMs.TcpConnect.Duration, strings.ToUpper(overall.TimingsMs.TcpConnect.Status))
-	}
-
-	// TLS or TTFB
-	if overall.TCP.Status == "ok" {
-		fmt.Fprintf(&b, " %-8s%8d ms  (%s)\n", "TLS", overall.TimingsMs.TlsHandshake.Duration, strings.ToUpper(overall.TimingsMs.TlsHandshake.Status))
-		fmt.Fprintf(&b, " %-8s%8d ms  (%s)\n", "TTFB", overall.TimingsMs.Ttfb.Duration, strings.ToUpper(overall.TimingsMs.Ttfb.Status))
-	}
-
-	// Total
-	if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
-		fmt.Fprintf(&b, " %-8s%8d ms\n", "Total", overall.TimingsMs.Total.Duration)
-	}
-
-	fmt.Fprintf(&b, "\n")
-
-	return b.String()
 }
 
 // performDiagnosis executes the diagnostic process and returns the result
@@ -1007,19 +1127,6 @@ func main() {
 
 	initialURL := args[0]
 
-	// Perform diagnosis
-	diagnosticResult := performDiagnosis(initialURL)
-
-	// Output based on flags
-	var result string = ""
-	if *jsonFlag {
-		result = printJSON(diagnosticResult)
-	} else if *verboseFlag {
-		result = printVerbose(diagnosticResult.Redirects)
-	} else {
-		result = printDefault(diagnosticResult.Overall)
-	}
-
 	var output io.Writer = os.Stdout
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 
@@ -1048,6 +1155,19 @@ func main() {
 		color.NoColor = false
 	} else {
 		color.NoColor = true
+	}
+
+	// Perform diagnosis
+	diagnosticResult := performDiagnosis(initialURL)
+
+	// Output based on flags
+	var result string = ""
+	if *jsonFlag {
+		result = printJSON(diagnosticResult)
+	} else if *verboseFlag {
+		result = printVerbose(diagnosticResult.Redirects)
+	} else {
+		result = printDefault(diagnosticResult.Overall, isTerminal)
 	}
 
 	// // color function
