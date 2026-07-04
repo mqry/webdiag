@@ -854,9 +854,9 @@ func printDefault(overall Overall, isColor bool) string {
 			if len(overall.RedirectUrls) > 0 {
 				for num, redirectUrl := range overall.RedirectUrls {
 					if len(overall.RedirectUrls) == 1 {
-						fmt.Fprintf(&b, " %-23s%s\n", keyColor(keyColor("Redirect")), valColor(redirectUrl))
+						fmt.Fprintf(&b, " %-23s%s\n", keyColor("Redirect"), valColor(redirectUrl))
 					} else {
-						fmt.Fprintf(&b, " %s%-14s%s\n", keyColor(keyColor("Redirect#")), keyColor(num+1), valColor(redirectUrl))
+						fmt.Fprintf(&b, " %s%-14s%s\n", keyColor("Redirect#"), keyColor(num+1), valColor(redirectUrl))
 					}
 				}
 			} else {
