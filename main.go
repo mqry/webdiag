@@ -667,11 +667,11 @@ func printJSON(diagnosticResult DiagnosticResult) string {
 	enc.SetIndent("", " ")
 
 	if err := enc.Encode(diagnosticResult); err != nil {
-		fmt.Sprintf(`{"ERROR_MESSAGE": "%s"}`+"\n", err.Error())
+		fmt.Printf(`{"ERROR_MESSAGE": "%s"}`+"\n", err.Error())
 		return ""
 	}
 
-	return fmt.Sprintf(buf.String())
+	return fmt.Sprint(buf.String())
 }
 
 // printVerbose outputs detailed diagnostic information for each redirect
