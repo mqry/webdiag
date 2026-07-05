@@ -1091,7 +1091,7 @@ func printDefault(overall Overall, isColor bool) string {
 			fmt.Fprint(&b, keyColor("Timings\n"))
 		}
 
-		// DNS
+		// Timings DNS
 		timingsDnsDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.DnsLookup.Duration)
 		timingsDnsStatusStr := fmt.Sprintf("(%s)", upper(overall.TimingsMs.DnsLookup.Status))
 		if overall.DNS.Status == "ok" {
@@ -1102,12 +1102,14 @@ func printDefault(overall Overall, isColor bool) string {
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(timingsDnsStatusStr))
 			case "warn":
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("DNS"), warnColor(timingsDnsDurationStr), warnColor(timingsDnsStatusStr))
-			default:
+			case "bad":
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("DNS"), errColor(timingsDnsDurationStr), errColor(timingsDnsStatusStr))
+			default:
+				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(timingsDnsStatusStr))
 			}
 		}
 
-		// TCP
+		// Timings TCP
 		timingsTcpDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.TcpConnect.Duration)
 		timingsTcpStatusStr := fmt.Sprintf("(%s)", upper(overall.TimingsMs.TcpConnect.Status))
 		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
@@ -1118,12 +1120,14 @@ func printDefault(overall Overall, isColor bool) string {
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(timingsTcpStatusStr))
 			case "warn":
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TCP"), warnColor(timingsTcpDurationStr), warnColor(timingsTcpStatusStr))
-			default:
+			case "bad":
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TCP"), errColor(timingsTcpDurationStr), errColor(timingsTcpStatusStr))
+			default:
+				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(timingsTcpStatusStr))
 			}
 		}
 
-		// TLS or TTFB
+		// Timings TLS or TTFB
 		timingsTlsDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.TlsHandshake.Duration)
 		timingsTlsStatusStr := fmt.Sprintf("(%s)", upper(overall.TimingsMs.TlsHandshake.Status))
 		timingsTtfbDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.Ttfb.Duration)
@@ -1137,8 +1141,10 @@ func printDefault(overall Overall, isColor bool) string {
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(timingsTlsStatusStr))
 			case "warn":
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TLS"), warnColor(timingsTlsDurationStr), warnColor(timingsTlsStatusStr))
-			default:
+			case "bad":
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TLS"), errColor(timingsTlsDurationStr), errColor(timingsTlsStatusStr))
+			default:
+				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(timingsTlsStatusStr))
 			}
 
 			switch overall.TimingsMs.Ttfb.Status {
@@ -1148,12 +1154,14 @@ func printDefault(overall Overall, isColor bool) string {
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(timingsTtfbStatusStr))
 			case "warn":
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TTFB"), warnColor(timingsTtfbDurationStr), warnColor(timingsTtfbStatusStr))
-			default:
+			case "bad":
 				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TTFB"), errColor(timingsTtfbDurationStr), errColor(timingsTtfbStatusStr))
+			default:
+				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(timingsTtfbStatusStr))
 			}
 		}
 
-		// Total
+		// Timings Total
 		timingsTotalDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.Total.Duration)
 		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
 			fmt.Fprintf(&b, " %-20s%16s\n", keyColor("Total"), valColor(timingsTotalDurationStr))
