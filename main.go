@@ -709,8 +709,10 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			switch redirect.DNS.Status {
 			case "ok":
 				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.DNS.Status)))
-			default:
+			case "error":
 				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), errColor(upper(redirect.DNS.Status)))
+			default:
+				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.DNS.Status)))
 			}
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Hostname"), valColor(redirect.Site.Hostname))
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("IP"), valColor(redirect.Site.IP))
@@ -723,8 +725,10 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			switch redirect.TCP.Status {
 			case "ok":
 				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.TCP.Status)))
-			default:
+			case "error":
 				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), errColor(upper(redirect.TCP.Status)))
+			default:
+				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.TCP.Status)))
 			}
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Port"), valColor(redirect.TCP.Port))
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("ERROR"), errColor(redirect.TCP.ErrorConn))
@@ -736,8 +740,10 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			switch redirect.TLS.Status {
 			case "ok":
 				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.TLS.Status)))
-			default:
+			case "error":
 				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), errColor(upper(redirect.TLS.Status)))
+			default:
+				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.TLS.Status)))
 			}
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Version"), valColor(redirect.TLS.Version))
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("ALPN"), valColor(redirect.TLS.ALPN))
@@ -757,8 +763,10 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			switch redirect.Certificate.Status {
 			case "ok":
 				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.Certificate.Status)))
-			default:
+			case "error":
 				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), errColor(upper(redirect.Certificate.Status)))
+			default:
+				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.Certificate.Status)))
 			}
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Subject"), valColor(redirect.Certificate.Subject))
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Issuer"), valColor(redirect.Certificate.Issuer))
@@ -778,8 +786,10 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			switch redirect.Http.Status {
 			case "ok":
 				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.Http.Status)))
-			default:
+			case "error":
 				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), errColor(upper(redirect.Http.Status)))
+			default:
+				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.Http.Status)))
 			}
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Version"), valColor(redirect.Http.Version))
 			if redirect.Http.StatusCode != 0 {
@@ -1030,7 +1040,7 @@ func printDefault(overall Overall, isColor bool) string {
 			fmt.Fprintf(&b, "%-24s%s\n", keyColor("DNS"), errColor(upper(overall.DNS.Status)))
 			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorDns))
 		default:
-			fmt.Fprintf(&b, "%-24s%s\n", "IP", (valColor(overall.Site.IP)))
+			fmt.Fprintf(&b, "%-24s%s\n", keyColor("IP"), valColor(overall.Site.IP))
 		}
 
 		// TCP
@@ -1039,7 +1049,7 @@ func printDefault(overall Overall, isColor bool) string {
 		case "ok":
 			fmt.Fprintf(&b, "%-24s%s %s\n", keyColor("TCP"), valColor(upper(overall.TCP.Status)), valColor(portStr))
 		case "error":
-			fmt.Fprintf(&b, "%-24s%s %s\n", keyColor("TCP"), errColor(upper(overall.TCP.Status)), errColor(overall.TCP.Port))
+			fmt.Fprintf(&b, "%-24s%s %s\n", keyColor("TCP"), errColor(upper(overall.TCP.Status)), errColor(portStr))
 			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorConn))
 		}
 
