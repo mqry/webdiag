@@ -1,9 +1,9 @@
 # webdiag
 
-# improve
-## modify verbose mode like default mode
-## modify json mode like default mode
+# improvements
 ## summary shows only if redirects url exists
-## replace name as details into redirect
-## replace name as summary into overall
+## print function simplifying with common contents
 ## highlight display
+### modify json mode like default mode
+### adjusting environment variable NO_COLOR
+### adding flag --color & --no-color
