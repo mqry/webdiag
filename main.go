@@ -680,11 +680,11 @@ func printJSON(diagnosticResult DiagnosticResult) string {
 
 // printVerbose outputs detailed diagnostic information for each redirect
 func printVerbose(allRedirects []Response, isColor bool) string {
-	titleColor := color.New(color.FgHiCyan).SprintFunc()
-	keyColor := color.New(color.FgHiBlue).SprintFunc()
-	valColor := color.New(color.FgHiGreen).SprintFunc()
-	warnColor := color.New(color.FgHiYellow).SprintFunc()
-	errColor := color.New(color.FgHiRed).SprintFunc()
+	titleColor := color.New(color.FgCyan, color.Bold).SprintFunc()
+	keyColor := color.New(color.FgHiBlue, color.Bold).SprintFunc()
+	valColor := color.New(color.FgGreen).SprintFunc()
+	warnColor := color.New(color.FgYellow).SprintFunc()
+	errColor := color.New(color.FgRed).SprintFunc()
 
 	var b strings.Builder
 
@@ -708,15 +708,15 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			fmt.Fprint(&b, titleColor("---\n"))
 			switch redirect.DNS.Status {
 			case "ok":
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.DNS.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(upper(redirect.DNS.Status)))
 			case "error":
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), errColor(upper(redirect.DNS.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), errColor(upper(redirect.DNS.Status)))
 			default:
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.DNS.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(upper(redirect.DNS.Status)))
 			}
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Hostname"), valColor(redirect.Site.Hostname))
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("IP"), valColor(redirect.Site.IP))
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("ERROR"), errColor(redirect.DNS.ErrorDns))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Hostname"), valColor(redirect.Site.Hostname))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("IP"), valColor(redirect.Site.IP))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("ERROR"), errColor(redirect.DNS.ErrorDns))
 			fmt.Fprint(&b, "\n")
 
 			// TCP
@@ -724,14 +724,14 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			fmt.Fprint(&b, titleColor("---\n"))
 			switch redirect.TCP.Status {
 			case "ok":
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.TCP.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(upper(redirect.TCP.Status)))
 			case "error":
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), errColor(upper(redirect.TCP.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), errColor(upper(redirect.TCP.Status)))
 			default:
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.TCP.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(upper(redirect.TCP.Status)))
 			}
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Port"), valColor(redirect.TCP.Port))
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("ERROR"), errColor(redirect.TCP.ErrorConn))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Port"), valColor(redirect.TCP.Port))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("ERROR"), errColor(redirect.TCP.ErrorConn))
 			fmt.Fprint(&b, "\n")
 
 			// TLS
@@ -739,19 +739,19 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			fmt.Fprint(&b, titleColor("---\n"))
 			switch redirect.TLS.Status {
 			case "ok":
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.TLS.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(upper(redirect.TLS.Status)))
 			case "error":
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), errColor(upper(redirect.TLS.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), errColor(upper(redirect.TLS.Status)))
 			default:
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.TLS.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(upper(redirect.TLS.Status)))
 			}
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Version"), valColor(redirect.TLS.Version))
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("ALPN"), valColor(redirect.TLS.ALPN))
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Cipher"), valColor(redirect.TLS.Cipher))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Version"), valColor(redirect.TLS.Version))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("ALPN"), valColor(redirect.TLS.ALPN))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Cipher"), valColor(redirect.TLS.Cipher))
 			if redirect.TLS.Status == "ok" {
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("SNI"), valColor(redirect.TLS.SNI))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("SNI"), valColor(redirect.TLS.SNI))
 			}
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("ERROR"), errColor(redirect.TLS.ErrorTls))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("ERROR"), errColor(redirect.TLS.ErrorTls))
 			for num, warning := range redirect.TLS.TlsWarnings {
 				fmt.Fprintf(&b, "%s%-15s %s\n", keyColor("Warning#"), keyColor(num+1), warnColor(warning))
 			}
@@ -762,22 +762,22 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			fmt.Fprint(&b, titleColor("-----------\n"))
 			switch redirect.Certificate.Status {
 			case "ok":
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.Certificate.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(upper(redirect.Certificate.Status)))
 			case "error":
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), errColor(upper(redirect.Certificate.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), errColor(upper(redirect.Certificate.Status)))
 			default:
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.Certificate.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(upper(redirect.Certificate.Status)))
 			}
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Subject"), valColor(redirect.Certificate.Subject))
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Issuer"), valColor(redirect.Certificate.Issuer))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Subject"), valColor(redirect.Certificate.Subject))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Issuer"), valColor(redirect.Certificate.Issuer))
 			for num, certificate := range redirect.Certificate.Chains {
-				fmt.Fprintf(&b, "%s%-17s %s\n", keyColor("Chain#"), keyColor(num+1), valColor(certificate))
+				fmt.Fprintf(&b, "%s%-20s %s\n", keyColor("Chain#"), keyColor(num+1), valColor(certificate))
 			}
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Expires"), valColor(redirect.Certificate.ExpiryDate))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Expires"), valColor(redirect.Certificate.ExpiryDate))
 			if redirect.TLS.Status == "ok" {
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Days Left"), valColor(redirect.Certificate.DaysRemaining))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Days Left"), valColor(redirect.Certificate.DaysRemaining))
 			}
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("ERROR"), errColor(redirect.Certificate.ErrorCert))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("ERROR"), errColor(redirect.Certificate.ErrorCert))
 			fmt.Fprint(&b, "\n")
 
 			// HTTP
@@ -785,25 +785,25 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			fmt.Fprint(&b, titleColor("----\n"))
 			switch redirect.Http.Status {
 			case "ok":
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.Http.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(upper(redirect.Http.Status)))
 			case "error":
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), errColor(upper(redirect.Http.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), errColor(upper(redirect.Http.Status)))
 			default:
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(upper(redirect.Http.Status)))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(upper(redirect.Http.Status)))
 			}
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Version"), valColor(redirect.Http.Version))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Version"), valColor(redirect.Http.Version))
 			if redirect.Http.StatusCode != 0 {
-				fmt.Fprintf(&b, "%-24s%s\n", keyColor("Status"), valColor(redirect.Http.StatusCode))
+				fmt.Fprintf(&b, "%-27s%s\n", keyColor("Status"), valColor(redirect.Http.StatusCode))
 			}
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Redirect"), valColor(redirect.Http.RedirectUrl))
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("ERROR"), errColor(redirect.Http.ErrorHttp))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Redirect"), valColor(redirect.Http.RedirectUrl))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("ERROR"), errColor(redirect.Http.ErrorHttp))
 			fmt.Fprint(&b, "\n")
 
 			// HTTP/3
 			fmt.Fprint(&b, titleColor("HTTP/3\n"))
 			fmt.Fprint(&b, titleColor("------\n"))
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Supported"), valColor(upper(redirect.Http3.HTTP3Supported)))
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("Alt-Svc"), valColor(redirect.Http3.AltSvc))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Supported"), valColor(upper(redirect.Http3.HTTP3Supported)))
+			fmt.Fprintf(&b, "%-27s%s\n", keyColor("Alt-Svc"), valColor(redirect.Http3.AltSvc))
 			fmt.Fprint(&b, "\n")
 
 			// Timings
@@ -827,75 +827,75 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			// Timings DNS
 			switch redirect.TimingsMs.DnsLookup.Status {
 			case "good":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(upper(timingsDnsStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(upper(timingsDnsStatusStr)))
 			case "ok":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(upper(timingsDnsStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(upper(timingsDnsStatusStr)))
 			case "warn":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("DNS"), warnColor(timingsDnsDurationStr), warnColor(upper(timingsDnsStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("DNS"), warnColor(timingsDnsDurationStr), warnColor(upper(timingsDnsStatusStr)))
 			case "bad":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("DNS"), errColor(timingsDnsDurationStr), errColor(upper(timingsDnsStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("DNS"), errColor(timingsDnsDurationStr), errColor(upper(timingsDnsStatusStr)))
 			default:
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(upper(timingsDnsStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(upper(timingsDnsStatusStr)))
 			}
 
 			// Timings TCP
 			switch redirect.TimingsMs.TcpConnect.Status {
 			case "good":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(upper(timingsTcpStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(upper(timingsTcpStatusStr)))
 			case "ok":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(upper(timingsTcpStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(upper(timingsTcpStatusStr)))
 			case "warn":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TCP"), warnColor(timingsTcpDurationStr), warnColor(upper(timingsTcpStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TCP"), warnColor(timingsTcpDurationStr), warnColor(upper(timingsTcpStatusStr)))
 			case "bad":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TCP"), errColor(timingsTcpDurationStr), errColor(upper(timingsTcpStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TCP"), errColor(timingsTcpDurationStr), errColor(upper(timingsTcpStatusStr)))
 			default:
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(upper(timingsTcpStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(upper(timingsTcpStatusStr)))
 			}
 
 			// Timings TLS
 			switch redirect.TimingsMs.TlsHandshake.Status {
 			case "good":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(upper(timingsTlsStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(upper(timingsTlsStatusStr)))
 			case "ok":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(upper(timingsTlsStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(upper(timingsTlsStatusStr)))
 			case "warn":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TLS"), warnColor(timingsTlsDurationStr), warnColor(upper(timingsTlsStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TLS"), warnColor(timingsTlsDurationStr), warnColor(upper(timingsTlsStatusStr)))
 			case "bad":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TLS"), errColor(timingsTlsDurationStr), errColor(upper(timingsTlsStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TLS"), errColor(timingsTlsDurationStr), errColor(upper(timingsTlsStatusStr)))
 			default:
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(upper(timingsTlsStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(upper(timingsTlsStatusStr)))
 			}
 
 			// Timings PreTransfer
 			switch redirect.TimingsMs.Pretransfer.Status {
 			case "good":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("PRE"), valColor(timingsPreDurationStr), valColor(upper(timingsPreStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("PRE"), valColor(timingsPreDurationStr), valColor(upper(timingsPreStatusStr)))
 			case "ok":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("PRE"), valColor(timingsPreDurationStr), valColor(upper(timingsPreStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("PRE"), valColor(timingsPreDurationStr), valColor(upper(timingsPreStatusStr)))
 			case "warn":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("PRE"), warnColor(timingsPreDurationStr), warnColor(upper(timingsPreStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("PRE"), warnColor(timingsPreDurationStr), warnColor(upper(timingsPreStatusStr)))
 			case "bad":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("PRE"), errColor(timingsPreDurationStr), errColor(upper(timingsPreStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("PRE"), errColor(timingsPreDurationStr), errColor(upper(timingsPreStatusStr)))
 			default:
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("PRE"), valColor(timingsPreDurationStr), valColor(upper(timingsPreStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("PRE"), valColor(timingsPreDurationStr), valColor(upper(timingsPreStatusStr)))
 			}
 
 			// Timings TTFB
 			switch redirect.TimingsMs.Ttfb.Status {
 			case "good":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(upper(timingsTtfbStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(upper(timingsTtfbStatusStr)))
 			case "ok":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(upper(timingsTtfbStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(upper(timingsTtfbStatusStr)))
 			case "warn":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TTFB"), warnColor(timingsTtfbDurationStr), warnColor(upper(timingsTtfbStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TTFB"), warnColor(timingsTtfbDurationStr), warnColor(upper(timingsTtfbStatusStr)))
 			case "bad":
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TTFB"), errColor(timingsTtfbDurationStr), errColor(upper(timingsTtfbStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TTFB"), errColor(timingsTtfbDurationStr), errColor(upper(timingsTtfbStatusStr)))
 			default:
-				fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(upper(timingsTtfbStatusStr)))
+				fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(upper(timingsTtfbStatusStr)))
 			}
 
 			// Timings Total
-			fmt.Fprintf(&b, "%-20s%16s %s\n", keyColor("Total"), valColor(timingsTotalDurationStr), valColor(timingsTotalStatusStr))
+			fmt.Fprintf(&b, "%-25s%16s %s\n", keyColor("Total"), valColor(timingsTotalDurationStr), valColor(timingsTotalStatusStr))
 
 			fmt.Fprint(&b, "\n")
 
@@ -994,12 +994,12 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			// Timings
 			fmt.Fprint(&b, "Timinigs\n")
 			fmt.Fprint(&b, "--------\n")
-			fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "DNS", redirect.TimingsMs.DnsLookup.Duration, upper(redirect.TimingsMs.DnsLookup.Status))
-			fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "TCP", redirect.TimingsMs.TcpConnect.Duration, upper(redirect.TimingsMs.TcpConnect.Status))
-			fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "TLS", redirect.TimingsMs.TlsHandshake.Duration, upper(redirect.TimingsMs.TlsHandshake.Status))
-			fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "PRE", redirect.TimingsMs.Pretransfer.Duration, upper(redirect.TimingsMs.Pretransfer.Status))
-			fmt.Fprintf(&b, "%-8s%8d ms  (%s)\n", "TTFB", redirect.TimingsMs.Ttfb.Duration, upper(redirect.TimingsMs.Ttfb.Status))
-			fmt.Fprintf(&b, "%-8s%8d ms\n", "Total", redirect.TimingsMs.Total.Duration)
+			fmt.Fprintf(&b, "%-9s%8d ms  (%s)\n", "DNS", redirect.TimingsMs.DnsLookup.Duration, upper(redirect.TimingsMs.DnsLookup.Status))
+			fmt.Fprintf(&b, "%-9s%8d ms  (%s)\n", "TCP", redirect.TimingsMs.TcpConnect.Duration, upper(redirect.TimingsMs.TcpConnect.Status))
+			fmt.Fprintf(&b, "%-9s%8d ms  (%s)\n", "TLS", redirect.TimingsMs.TlsHandshake.Duration, upper(redirect.TimingsMs.TlsHandshake.Status))
+			fmt.Fprintf(&b, "%-9s%8d ms  (%s)\n", "PRE", redirect.TimingsMs.Pretransfer.Duration, upper(redirect.TimingsMs.Pretransfer.Status))
+			fmt.Fprintf(&b, "%-9s%8d ms  (%s)\n", "TTFB", redirect.TimingsMs.Ttfb.Duration, upper(redirect.TimingsMs.Ttfb.Status))
+			fmt.Fprintf(&b, "%-9s%8d ms\n", "Total", redirect.TimingsMs.Total.Duration)
 			fmt.Fprint(&b, "\n")
 
 			// Option: Redirect Arrow
@@ -1019,81 +1019,81 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 
 // printDefault outputs a summary of the diagnostic result
 func printDefault(overall Overall, isColor bool) string {
-	keyColor := color.New(color.FgHiBlue).SprintFunc()
-	valColor := color.New(color.FgHiGreen).SprintFunc()
-	warnColor := color.New(color.FgHiYellow).SprintFunc()
-	errColor := color.New(color.FgHiRed).SprintFunc()
+	keyColor := color.New(color.FgHiBlue, color.Bold).SprintFunc()
+	valColor := color.New(color.FgGreen).SprintFunc()
+	warnColor := color.New(color.FgYellow).SprintFunc()
+	errColor := color.New(color.FgRed).SprintFunc()
 
 	var b strings.Builder
 
 	switch isColor {
 	case true:
 		// Site
-		fmt.Fprintf(&b, "%-24s%s\n", keyColor("URL"), valColor(overall.Site.URL))
+		fmt.Fprintf(&b, "%-29s%s\n", keyColor("URL"), valColor(overall.Site.URL))
 
 		// DNS
 		ipStr := fmt.Sprintf("(%s)", overall.Site.IP)
 		switch overall.DNS.Status {
 		case "ok":
-			fmt.Fprintf(&b, "%-24s%s %s\n", keyColor("DNS"), valColor(upper(overall.DNS.Status)), valColor(ipStr))
+			fmt.Fprintf(&b, "%-29s%s %s\n", keyColor("DNS"), valColor(upper(overall.DNS.Status)), valColor(ipStr))
 		case "error":
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("DNS"), errColor(upper(overall.DNS.Status)))
-			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorDns))
+			fmt.Fprintf(&b, "%-29s%s\n", keyColor("DNS"), errColor(upper(overall.DNS.Status)))
+			fmt.Fprintf(&b, " %-28s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorDns))
 		default:
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("IP"), valColor(overall.Site.IP))
+			fmt.Fprintf(&b, "%-29s%s\n", keyColor("IP"), valColor(overall.Site.IP))
 		}
 
 		// TCP
 		portStr := fmt.Sprintf("(%s port)", overall.TCP.Port)
 		switch overall.TCP.Status {
 		case "ok":
-			fmt.Fprintf(&b, "%-24s%s %s\n", keyColor("TCP"), valColor(upper(overall.TCP.Status)), valColor(portStr))
+			fmt.Fprintf(&b, "%-29s%s %s\n", keyColor("TCP"), valColor(upper(overall.TCP.Status)), valColor(portStr))
 		case "error":
-			fmt.Fprintf(&b, "%-24s%s %s\n", keyColor("TCP"), errColor(upper(overall.TCP.Status)), errColor(portStr))
-			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorConn))
+			fmt.Fprintf(&b, "%-29s%s %s\n", keyColor("TCP"), errColor(upper(overall.TCP.Status)), errColor(portStr))
+			fmt.Fprintf(&b, " %-28s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorConn))
 		}
 
 		// TLS
 		switch overall.TLS.Status {
 		case "ok":
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("TLS"), valColor(upper(overall.TLS.Status)))
-			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Version"), valColor(overall.TLS.Version))
-			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Cipher"), valColor(overall.TLS.Cipher))
+			fmt.Fprintf(&b, "%-29s%s\n", keyColor("TLS"), valColor(upper(overall.TLS.Status)))
+			fmt.Fprintf(&b, " %-28s%s\n", keyColor("Version"), valColor(overall.TLS.Version))
+			fmt.Fprintf(&b, " %-28s%s\n", keyColor("Cipher"), valColor(overall.TLS.Cipher))
 		case "error":
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("TLS"), errColor(upper(overall.TLS.Status)))
-			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorTls))
+			fmt.Fprintf(&b, "%-29s%s\n", keyColor("TLS"), errColor(upper(overall.TLS.Status)))
+			fmt.Fprintf(&b, " %-28s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorTls))
 		}
 
 		// Certificate
 		daysStr := fmt.Sprintf("(%d days)", overall.Certificate.DaysRemaining)
 		switch overall.Certificate.Status {
 		case "ok":
-			fmt.Fprintf(&b, " %-23s%s %s\n", keyColor("Certificate"), valColor(upper(overall.Certificate.Status)), valColor(daysStr))
+			fmt.Fprintf(&b, " %-28s%s %s\n", keyColor("Certificate"), valColor(upper(overall.Certificate.Status)), valColor(daysStr))
 		case "error":
-			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Certificate"), errColor(upper(overall.Certificate.Status)))
-			fmt.Fprintf(&b, "  %-22s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorCert))
+			fmt.Fprintf(&b, " %-28s%s\n", keyColor("Certificate"), errColor(upper(overall.Certificate.Status)))
+			fmt.Fprintf(&b, "  %-27s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorCert))
 		}
 
 		// HTTP
 		switch overall.Http.Status {
 		case "ok":
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("HTTP"), valColor(upper(overall.Http.Status)))
-			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Version"), valColor(upper(overall.Http.Version)))
-			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Status"), valColor(overall.Http.StatusCode))
+			fmt.Fprintf(&b, "%-29s%s\n", keyColor("HTTP"), valColor(upper(overall.Http.Status)))
+			fmt.Fprintf(&b, " %-28s%s\n", keyColor("Version"), valColor(upper(overall.Http.Version)))
+			fmt.Fprintf(&b, " %-28s%s\n", keyColor("Status"), valColor(overall.Http.StatusCode))
 			if len(overall.RedirectUrls) > 0 {
 				for num, redirectUrl := range overall.RedirectUrls {
 					if len(overall.RedirectUrls) == 1 {
-						fmt.Fprintf(&b, " %-23s%s\n", keyColor("Redirect"), valColor(redirectUrl))
+						fmt.Fprintf(&b, " %-28s%s\n", keyColor("Redirect"), valColor(redirectUrl))
 					} else {
-						fmt.Fprintf(&b, " %s%-14s%s\n", keyColor("Redirect#"), keyColor(num+1), valColor(redirectUrl))
+						fmt.Fprintf(&b, " %s%-28s%s\n", keyColor("Redirect#"), keyColor(num+1), valColor(redirectUrl))
 					}
 				}
 			} else {
-				fmt.Fprintf(&b, " %-23s%s\n", keyColor("Redirect"), valColor("None"))
+				fmt.Fprintf(&b, " %-28s%s\n", keyColor("Redirect"), valColor("None"))
 			}
 		case "error":
-			fmt.Fprintf(&b, "%-24s%s\n", keyColor("HTTP"), errColor(upper(overall.Http.Status)))
-			fmt.Fprintf(&b, " %-23s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorHttp))
+			fmt.Fprintf(&b, "%-29s%s\n", keyColor("HTTP"), errColor(upper(overall.Http.Status)))
+			fmt.Fprintf(&b, " %-28s%s\n", keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorHttp))
 		}
 
 		// Timings
@@ -1107,15 +1107,15 @@ func printDefault(overall Overall, isColor bool) string {
 		if overall.DNS.Status == "ok" {
 			switch overall.TimingsMs.DnsLookup.Status {
 			case "good":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(timingsDnsStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(timingsDnsStatusStr))
 			case "ok":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(timingsDnsStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(timingsDnsStatusStr))
 			case "warn":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("DNS"), warnColor(timingsDnsDurationStr), warnColor(timingsDnsStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("DNS"), warnColor(timingsDnsDurationStr), warnColor(timingsDnsStatusStr))
 			case "bad":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("DNS"), errColor(timingsDnsDurationStr), errColor(timingsDnsStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("DNS"), errColor(timingsDnsDurationStr), errColor(timingsDnsStatusStr))
 			default:
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(timingsDnsStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("DNS"), valColor(timingsDnsDurationStr), valColor(timingsDnsStatusStr))
 			}
 		}
 
@@ -1125,15 +1125,15 @@ func printDefault(overall Overall, isColor bool) string {
 		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
 			switch overall.TimingsMs.TcpConnect.Status {
 			case "good":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(timingsTcpStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(timingsTcpStatusStr))
 			case "ok":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(timingsTcpStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(timingsTcpStatusStr))
 			case "warn":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TCP"), warnColor(timingsTcpDurationStr), warnColor(timingsTcpStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TCP"), warnColor(timingsTcpDurationStr), warnColor(timingsTcpStatusStr))
 			case "bad":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TCP"), errColor(timingsTcpDurationStr), errColor(timingsTcpStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TCP"), errColor(timingsTcpDurationStr), errColor(timingsTcpStatusStr))
 			default:
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(timingsTcpStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TCP"), valColor(timingsTcpDurationStr), valColor(timingsTcpStatusStr))
 			}
 		}
 
@@ -1146,35 +1146,35 @@ func printDefault(overall Overall, isColor bool) string {
 		if overall.TCP.Status == "ok" {
 			switch overall.TimingsMs.TlsHandshake.Status {
 			case "good":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(timingsTlsStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(timingsTlsStatusStr))
 			case "ok":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(timingsTlsStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(timingsTlsStatusStr))
 			case "warn":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TLS"), warnColor(timingsTlsDurationStr), warnColor(timingsTlsStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TLS"), warnColor(timingsTlsDurationStr), warnColor(timingsTlsStatusStr))
 			case "bad":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TLS"), errColor(timingsTlsDurationStr), errColor(timingsTlsStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TLS"), errColor(timingsTlsDurationStr), errColor(timingsTlsStatusStr))
 			default:
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(timingsTlsStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TLS"), valColor(timingsTlsDurationStr), valColor(timingsTlsStatusStr))
 			}
 
 			switch overall.TimingsMs.Ttfb.Status {
 			case "good":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(timingsTtfbStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(timingsTtfbStatusStr))
 			case "ok":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(timingsTtfbStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(timingsTtfbStatusStr))
 			case "warn":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TTFB"), warnColor(timingsTtfbDurationStr), warnColor(timingsTtfbStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TTFB"), warnColor(timingsTtfbDurationStr), warnColor(timingsTtfbStatusStr))
 			case "bad":
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TTFB"), errColor(timingsTtfbDurationStr), errColor(timingsTtfbStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TTFB"), errColor(timingsTtfbDurationStr), errColor(timingsTtfbStatusStr))
 			default:
-				fmt.Fprintf(&b, " %-20s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(timingsTtfbStatusStr))
+				fmt.Fprintf(&b, " %-26s%16s %s\n", keyColor("TTFB"), valColor(timingsTtfbDurationStr), valColor(timingsTtfbStatusStr))
 			}
 		}
 
 		// Timings Total
 		timingsTotalDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.Total.Duration)
 		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
-			fmt.Fprintf(&b, " %-20s%16s\n", keyColor("Total"), valColor(timingsTotalDurationStr))
+			fmt.Fprintf(&b, " %-26s%16s\n", keyColor("Total"), valColor(timingsTotalDurationStr))
 		}
 
 		fmt.Fprintf(&b, "\n")
@@ -1252,25 +1252,25 @@ func printDefault(overall Overall, isColor bool) string {
 			fmt.Fprintf(&b, "Timings\n")
 		}
 
-		// DNS
+		// Timings DNS
 		if overall.DNS.Status == "ok" {
-			fmt.Fprintf(&b, " %-7s%8d ms  (%s)\n", "DNS", overall.TimingsMs.DnsLookup.Duration, upper(overall.TimingsMs.DnsLookup.Status))
+			fmt.Fprintf(&b, " %-8s%8d ms  (%s)\n", "DNS", overall.TimingsMs.DnsLookup.Duration, upper(overall.TimingsMs.DnsLookup.Status))
 		}
 
-		// TCP
+		// Timings TCP
 		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
-			fmt.Fprintf(&b, " %-7s%8d ms  (%s)\n", "TCP", overall.TimingsMs.TcpConnect.Duration, upper(overall.TimingsMs.TcpConnect.Status))
+			fmt.Fprintf(&b, " %-8s%8d ms  (%s)\n", "TCP", overall.TimingsMs.TcpConnect.Duration, upper(overall.TimingsMs.TcpConnect.Status))
 		}
 
-		// TLS or TTFB
+		// Timings TLS or TTFB
 		if overall.TCP.Status == "ok" {
-			fmt.Fprintf(&b, " %-7s%8d ms  (%s)\n", "TLS", overall.TimingsMs.TlsHandshake.Duration, upper(overall.TimingsMs.TlsHandshake.Status))
-			fmt.Fprintf(&b, " %-7s%8d ms  (%s)\n", "TTFB", overall.TimingsMs.Ttfb.Duration, upper(overall.TimingsMs.Ttfb.Status))
+			fmt.Fprintf(&b, " %-8s%8d ms  (%s)\n", "TLS", overall.TimingsMs.TlsHandshake.Duration, upper(overall.TimingsMs.TlsHandshake.Status))
+			fmt.Fprintf(&b, " %-8s%8d ms  (%s)\n", "TTFB", overall.TimingsMs.Ttfb.Duration, upper(overall.TimingsMs.Ttfb.Status))
 		}
 
-		// Total
+		// Timings Total
 		if overall.DNS.Status == "ok" || overall.DNS.Status == "unused" {
-			fmt.Fprintf(&b, " %-7s%8d ms\n", "Total", overall.TimingsMs.Total.Duration)
+			fmt.Fprintf(&b, " %-8s%8d ms\n", "Total", overall.TimingsMs.Total.Duration)
 		}
 
 		fmt.Fprintf(&b, "\n")
@@ -1445,20 +1445,6 @@ func main() {
 	} else {
 		result = printDefault(diagnosticResult.Overall, isTerminal)
 	}
-
-	// // color function
-	// green := color.New(color.FgGreen).SprintFunc()
-	// yellow := color.New(color.FgYellow).SprintFunc()
-	// cyan := color.New(color.FgCyan).SprintFunc()
-
-	// // create colored data
-	// lines := strings.Split(result, "\n")
-	// for line := range lines {
-	// 	line += fmt.Sprintf(
-	// 		green("SUCCESS"),
-	// 		cyan("highlight"),
-	// 	)
-	// }
 
 	fmt.Fprint(output, result)
 }
