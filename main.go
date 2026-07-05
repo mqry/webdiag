@@ -680,7 +680,7 @@ func printJSON(diagnosticResult DiagnosticResult) string {
 
 // printVerbose outputs detailed diagnostic information for each redirect
 func printVerbose(allRedirects []Response, isColor bool) string {
-	titleColor := color.New(color.FgHiMagenta).SprintFunc()
+	titleColor := color.New(color.FgHiCyan).SprintFunc()
 	keyColor := color.New(color.FgHiBlue).SprintFunc()
 	valColor := color.New(color.FgHiGreen).SprintFunc()
 	warnColor := color.New(color.FgHiYellow).SprintFunc()
@@ -694,13 +694,13 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 			// Time
 			fmt.Fprint(&b, titleColor("Time\n"))
 			fmt.Fprint(&b, titleColor("----\n"))
-			fmt.Fprintf(&b, "%s\n", valColor(redirect.Scan.StartTime))
+			fmt.Fprintf(&b, "%s\n", keyColor(redirect.Scan.StartTime))
 			fmt.Fprint(&b, "\n")
 
 			// URL
 			fmt.Fprint(&b, titleColor("URL\n"))
 			fmt.Fprint(&b, titleColor("---\n"))
-			fmt.Fprintf(&b, "%s\n", valColor(redirect.Site.URL))
+			fmt.Fprintf(&b, "%s\n", keyColor(redirect.Site.URL))
 			fmt.Fprint(&b, "\n")
 
 			// DNS
