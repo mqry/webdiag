@@ -1421,6 +1421,7 @@ func performDiagnosis(initialURL string) DiagnosticResult {
 func main() {
 	jsonFlag := flag.Bool("json", false, "Enable JSON output")
 	verboseFlag := flag.Bool("verbose", false, "Enable verbose output")
+	noColorFlag := flag.Bool("no-color", false, "Enable no color output")
 	flag.Parse()
 	args := flag.Args()
 
@@ -1433,6 +1434,7 @@ func main() {
 
 	var output io.Writer = os.Stdout
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
+	isColor := isTerminal && !*noColorFlag
 
 	// less
 	if isTerminal {
@@ -1455,7 +1457,7 @@ func main() {
 	}
 
 	// highlight
-	if isTerminal {
+	if isColor {
 		color.NoColor = false
 	} else {
 		color.NoColor = true
@@ -1469,9 +1471,9 @@ func main() {
 	if *jsonFlag {
 		result = printJSON(diagnosticResult)
 	} else if *verboseFlag {
-		result = printVerbose(diagnosticResult.Redirects, isTerminal)
+		result = printVerbose(diagnosticResult.Redirects, isColor)
 	} else {
-		result = printDefault(diagnosticResult.Overall, isTerminal)
+		result = printDefault(diagnosticResult.Overall, isColor)
 	}
 
 	fmt.Fprint(output, result)
