@@ -211,7 +211,7 @@ func main() {
 	// Output based on flags
 	var result string = ""
 	if *jsonFlag {
-		result = printJSON(diagnosticResult)
+		result = printJSON(diagnosticResult, isColor)
 	} else if *verboseFlag {
 		result = printVerbose(diagnosticResult.Redirects, isColor)
 	} else {
