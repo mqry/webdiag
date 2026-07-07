@@ -27,6 +27,7 @@ func diagnoseSite(targetURL string) Response {
 	var certChains []string
 	var certDnsNames []string
 	var certStatus string
+	var certStartStr string
 	var certExpiryStr string
 	var daysLeft int
 	var http3Supported string
@@ -210,6 +211,7 @@ func diagnoseSite(targetURL string) Response {
 
 			if len(state.PeerCertificates) > 0 {
 				leafCert := state.PeerCertificates[0]
+				certStartStr = leafCert.NotBefore.Format(time.RFC3339)
 				certExpiryStr = leafCert.NotAfter.Format(time.RFC3339)
 				certSubject = leafCert.Subject.String()
 				certIssuer = leafCert.Issuer.String()
@@ -413,6 +415,7 @@ func diagnoseSite(targetURL string) Response {
 			Chains:        certChains,
 			DnsNames:      certDnsNames,
 			DaysRemaining: daysLeft,
+			StartDate:     certStartStr,
 			ExpiryDate:    certExpiryStr,
 			ErrorCert:     errCertMsg,
 		},

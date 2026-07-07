@@ -85,6 +85,7 @@ type Certificate struct {
 	Issuer        string   `json:"issuer"`
 	Chains        []string `json:"chains"`
 	DnsNames      []string `json:"dns_names,omitempty"`
+	StartDate     string   `json:"start_date"`
 	ExpiryDate    string   `json:"expiry_date"`
 	ErrorCert     string   `json:"error"`
 }
