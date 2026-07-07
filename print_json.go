@@ -24,7 +24,7 @@ func printJSON(diagnosticResult DiagnosticResult, isColor bool) string {
 	} else {
 		cleanedBytes := bytes.TrimSpace(buf.Bytes())
 
-		blue := color.New(color.FgBlue).SprintFunc()
+		blue := color.New(color.FgBlue, color.Bold).SprintFunc()
 		green := color.New(color.FgGreen).SprintFunc()
 
 		var result bytes.Buffer

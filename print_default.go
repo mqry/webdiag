@@ -9,7 +9,7 @@ import (
 
 // printDefault outputs a summary of the diagnostic result
 func printDefault(overall Overall, isColor bool) string {
-	keyColor := color.New(color.FgHiBlue, color.Bold).SprintFunc()
+	keyColor := color.New(color.FgBlue, color.Bold).SprintFunc()
 	valColor := color.New(color.FgGreen).SprintFunc()
 	warnColor := color.New(color.FgYellow).SprintFunc()
 	errColor := color.New(color.FgRed).SprintFunc()
