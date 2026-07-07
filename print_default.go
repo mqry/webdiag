@@ -99,12 +99,12 @@ func printDefault(overall Overall, isColor bool) string {
 			fmt.Fprintf(&b, kvColorFormat2, keyColor("HTTP"), valColor(upper(overall.Http.Status)))
 			fmt.Fprintf(&b, kvColorFormat3, keyColor("Version"), valColor(upper(overall.Http.Version)))
 			fmt.Fprintf(&b, kvColorFormat3, keyColor("Status"), valColor(overall.Http.StatusCode))
-			if len(overall.RedirectUrls) > 0 {
-				for num, redirectUrl := range overall.RedirectUrls {
-					if len(overall.RedirectUrls) == 1 {
-						fmt.Fprintf(&b, kvColorFormat3, keyColor("Redirect"), valColor(redirectUrl))
+			if len(overall.Redirects.RedirectsInfo) > 0 {
+				for num, redirect := range overall.Redirects.RedirectsInfo {
+					if len(overall.Redirects.RedirectsInfo) == 1 {
+						fmt.Fprintf(&b, kvColorFormat3, keyColor("Redirect"), valColor(fmt.Sprintf("%s (Status: %d, Time: %dms)", redirect.URL, redirect.StatusCode, redirect.TotalTime.Duration)))
 					} else {
-						fmt.Fprintf(&b, kvColorFormat6, keyColor("Redirect#"), keyColor(num+1), valColor(redirectUrl))
+						fmt.Fprintf(&b, kvColorFormat6, keyColor("Redirect#"), keyColor(num+1), valColor(fmt.Sprintf("%s (Status: %d, Time: %dms)", redirect.URL, redirect.StatusCode, redirect.TotalTime.Duration)))
 					}
 				}
 			} else {
@@ -240,12 +240,12 @@ func printDefault(overall Overall, isColor bool) string {
 			fmt.Fprintf(&b, kvNoColorFormat2, "HTTP", upper(overall.Http.Status))
 			fmt.Fprintf(&b, kvNoColorFormat3, "Version", upper(overall.Http.Version))
 			fmt.Fprintf(&b, kvNoColorFormat3, "Status", str(overall.Http.StatusCode))
-			if len(overall.RedirectUrls) > 0 {
-				for num, redirectUrl := range overall.RedirectUrls {
-					if len(overall.RedirectUrls) == 1 {
-						fmt.Fprintf(&b, kvNoColorFormat3, "Redirect", redirectUrl)
+			if len(overall.Redirects.RedirectsInfo) > 0 {
+				for num, redirect := range overall.Redirects.RedirectsInfo {
+					if len(overall.Redirects.RedirectsInfo) == 1 {
+						fmt.Fprintf(&b, kvNoColorFormat3, "Redirect", fmt.Sprintf("%s (Status: %d, Time: %dms)", redirect.URL, redirect.StatusCode, redirect.TotalTime.Duration))
 					} else {
-						fmt.Fprintf(&b, kvNoColorFormat6, "Redirect#", num+1, redirectUrl)
+						fmt.Fprintf(&b, kvNoColorFormat6, "Redirect#", num+1, fmt.Sprintf("%s (Status: %d, Time: %dms)", redirect.URL, redirect.StatusCode, redirect.TotalTime.Duration))
 					}
 				}
 			} else {

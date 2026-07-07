@@ -46,9 +46,18 @@ func performDiagnosis(initialURL string) DiagnosticResult {
 	totalTimingsTtfbStatus = evaluateTiming("ttfb", totalTimingsTtfbDuration)
 	totalTimingsTotalStatus = evaluateTiming("totalTimings", totalTimingsTotalDuration)
 
-	// Collect Aggregate Message
+	// Collect Aggregate Info & Message
+	var redirectInfo []RedirectInfo
 	var redirectMessages []RedirectMessage
 	for _, redirect := range allRedirects {
+		redirectInfo = append(redirectInfo, RedirectInfo{
+			URL:        redirect.Site.URL,
+			StatusCode: redirect.Http.StatusCode,
+			TotalTime: ResponseTime{
+				redirect.TimingsMs.Total.Duration,
+				redirect.TimingsMs.Total.Status,
+			},
+		})
 		redirectMessages = append(redirectMessages, RedirectMessage{
 			OverallWarnings: OverallWarinings{
 				URL: redirect.Site.URL,
@@ -89,6 +98,11 @@ func performDiagnosis(initialURL string) DiagnosticResult {
 		},
 		TLS:         lastResult.TLS,
 		Certificate: lastResult.Certificate,
+		Http:        lastResult.Http,
+		Redirects: OverallInfo{
+			RedirectsInfo: redirectInfo,
+		},
+		Http3: lastResult.Http3,
 		TimingsMs: Timings{
 			DnsLookup:    ResponseTime{Duration: totalTimingsDnsDuration, Status: totalTimingsDnsStatus},
 			TcpConnect:   ResponseTime{Duration: totalTimingsTcpDuration, Status: totalTimingsTcpStatus},
@@ -100,9 +114,6 @@ func performDiagnosis(initialURL string) DiagnosticResult {
 		Message: OverallMessage{
 			PerRedirect: redirectMessages,
 		},
-		Http:         lastResult.Http,
-		Http3:        lastResult.Http3,
-		RedirectUrls: redirectUrls,
 	}
 
 	return DiagnosticResult{

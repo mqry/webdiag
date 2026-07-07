@@ -14,17 +14,17 @@ import (
 )
 
 type Overall struct {
-	Scan         Scan           `json:"scan"`
-	Site         Site           `json:"site"`
-	DNS          Dns            `json:"dns"`
-	TCP          Tcp            `json:"tcp"`
-	TLS          TLSConfig      `json:"tls"`
-	Certificate  Certificate    `json:"certificate"`
-	TimingsMs    Timings        `json:"timings_ms"`
-	Http         Http           `json:"http"`
-	RedirectUrls []string       `json:"redirect_urls"`
-	Http3        Http3          `json:"http3"`
-	Message      OverallMessage `json:"message"`
+	Scan        Scan           `json:"scan"`
+	Site        Site           `json:"site"`
+	DNS         Dns            `json:"dns"`
+	TCP         Tcp            `json:"tcp"`
+	TLS         TLSConfig      `json:"tls"`
+	Certificate Certificate    `json:"certificate"`
+	TimingsMs   Timings        `json:"timings_ms"`
+	Http        Http           `json:"http"`
+	Redirects   OverallInfo    `json:"redirects"`
+	Http3       Http3          `json:"http3"`
+	Message     OverallMessage `json:"message"`
 }
 
 type DiagnosticResult struct {
@@ -67,19 +67,6 @@ type Tcp struct {
 	ErrorConn string `json:"error"`
 }
 
-type Http struct {
-	Status      string `json:"status"`
-	StatusCode  int    `json:"status_code"`
-	RedirectUrl string `json:"redirect_url"`
-	Version     string `json:"version"`
-	ErrorHttp   string `json:"error"`
-}
-
-type Http3 struct {
-	HTTP3Supported string `json:"http3_supported"`
-	AltSvc         string `json:"alt_svc"`
-}
-
 type TLSConfig struct {
 	Status      string   `json:"status"`
 	SNI         string   `json:"sni"`
@@ -100,6 +87,29 @@ type Certificate struct {
 	DnsNames      []string `json:"dns_names,omitempty"`
 	ExpiryDate    string   `json:"expiry_date"`
 	ErrorCert     string   `json:"error"`
+}
+
+type Http struct {
+	Status      string `json:"status"`
+	StatusCode  int    `json:"status_code"`
+	RedirectUrl string `json:"redirect_url"`
+	Version     string `json:"version"`
+	ErrorHttp   string `json:"error"`
+}
+
+type RedirectInfo struct {
+	URL        string       `json:"url"`
+	StatusCode int          `json:"status_code"`
+	TotalTime  ResponseTime `json:"total"`
+}
+
+type OverallInfo struct {
+	RedirectsInfo []RedirectInfo `json:"redirects"`
+}
+
+type Http3 struct {
+	HTTP3Supported string `json:"http3_supported"`
+	AltSvc         string `json:"alt_svc"`
 }
 
 type Timings struct {
