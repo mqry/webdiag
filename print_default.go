@@ -100,7 +100,7 @@ func printDefault(overall Overall, isColor bool) string {
 			if len(overall.Redirects.RedirectsInfo) > 0 {
 				for num, redirect := range overall.Redirects.RedirectsInfo {
 					if len(overall.Redirects.RedirectsInfo) == 1 {
-						fmt.Fprintf(&b, kvColorFormat3, keyColor("Redirect"), valColor(redirect.URL))
+						fmt.Fprintf(&b, kvColorFormat3, keyColor("Redirect"), valColor("None"))
 					} else {
 						fmt.Fprintf(&b, kvColorFormat3, keyColor(fmt.Sprintf("Redirect#%d", num+1)), valColor(redirect.URL))
 					}
@@ -241,7 +241,7 @@ func printDefault(overall Overall, isColor bool) string {
 			if len(overall.Redirects.RedirectsInfo) > 0 {
 				for num, redirect := range overall.Redirects.RedirectsInfo {
 					if len(overall.Redirects.RedirectsInfo) == 1 {
-						fmt.Fprintf(&b, kvNoColorFormat3, "Redirect", redirect.URL)
+						fmt.Fprintf(&b, kvNoColorFormat3, "Redirect", "None")
 					} else {
 						fmt.Fprintf(&b, kvNoColorFormat3, fmt.Sprintf("Redirect#%d", num+1), redirect.URL)
 					}
