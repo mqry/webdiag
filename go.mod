@@ -1,4 +1,4 @@
-module urldiag
+module webdiag
 
 go 1.26.4
 
