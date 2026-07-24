@@ -20,10 +20,10 @@ type Overall struct {
 	TCP         Tcp            `json:"tcp"`
 	TLS         TLSConfig      `json:"tls"`
 	Certificate Certificate    `json:"certificate"`
-	TimingsMs   Timings        `json:"timings_ms"`
 	Http        Http           `json:"http"`
 	Redirects   OverallInfo    `json:"redirects"`
 	Http3       Http3          `json:"http3"`
+	TimingsMs   Timings        `json:"timings_ms"`
 	Message     OverallMessage `json:"message"`
 }
 
