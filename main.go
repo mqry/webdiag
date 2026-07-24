@@ -100,6 +100,7 @@ type Http struct {
 
 type RedirectInfo struct {
 	URL        string       `json:"url"`
+	RedirectTo string       `json:"redirect_to,omitempty"`
 	StatusCode int          `json:"status_code"`
 	TotalTime  ResponseTime `json:"total"`
 }

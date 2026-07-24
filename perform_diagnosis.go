@@ -52,6 +52,7 @@ func performDiagnosis(initialURL string) DiagnosticResult {
 	for _, redirect := range allRedirects {
 		redirectInfo = append(redirectInfo, RedirectInfo{
 			URL:        redirect.Site.URL,
+			RedirectTo: redirect.Http.RedirectUrl,
 			StatusCode: redirect.Http.StatusCode,
 			TotalTime: ResponseTime{
 				redirect.TimingsMs.Total.Duration,
