@@ -112,13 +112,10 @@ func printDefault(overall Overall, isColor bool) string {
 		fmt.Fprintf(&b, kvFormat2, keyColor("HTTP"), valColor(upper(overall.Http.Status)))
 		fmt.Fprintf(&b, kvFormat3, keyColor("Version"), valColor(upper(overall.Http.Version)))
 		fmt.Fprintf(&b, kvFormat3, keyColor("Status"), valColor(statusCodeStr))
-		if len(overall.Redirects.RedirectsInfo) > 0 {
+		if len(overall.Redirects.RedirectsInfo) > 1 {
 			for num, redirect := range overall.Redirects.RedirectsInfo {
-				if len(overall.Redirects.RedirectsInfo) == 1 {
-					fmt.Fprintf(&b, kvFormat3, keyColor("Redirect"), valColor("None"))
-				} else {
-					fmt.Fprintf(&b, kvFormat3, keyColor(fmt.Sprintf("Redirect#%d", num+1)), valColor(redirect.URL))
-				}
+				redirectHop := fmt.Sprintf("%d ->", redirect.StatusCode)
+				fmt.Fprintf(&b, kvFormat5, keyColor(fmt.Sprintf("Redirect#%d", num+1)), valColor(redirectHop), valColor(redirect.URL))
 			}
 		} else {
 			fmt.Fprintf(&b, kvFormat3, keyColor("Redirect"), valColor("None"))
