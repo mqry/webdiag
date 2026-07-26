@@ -52,9 +52,6 @@ func printDefault(overall Overall, isColor bool) string {
 	timingsTotalDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.Total.Duration)
 
 	ipStr := fmt.Sprintf("(%s)", overall.Site.IP)
-	// cnameResult := traceDomain(overall.Site.Hostname)
-	cnameChain := strings.Join(overall.DNS.Resolution, " -> ")
-	cnameStr := fmt.Sprintf("(%s)", cnameChain)
 	portStr := fmt.Sprintf("(%s port)", overall.TCP.Port)
 	daysStr := fmt.Sprintf("(%d days)", overall.Certificate.DaysRemaining)
 
@@ -69,7 +66,12 @@ func printDefault(overall Overall, isColor bool) string {
 		if len(overall.DNS.Resolution) == 0 {
 			fmt.Fprintf(&b, kvFormat1, keyColor("DNS"), valColor(upper(overall.DNS.Status)), valColor(ipStr))
 		} else {
-			fmt.Fprintf(&b, kvFormat1, keyColor("DNS"), valColor(upper(overall.DNS.Status)), valColor(cnameStr))
+			fmt.Fprintf(&b, kvFormat2, keyColor("DNS"), valColor(upper(overall.DNS.Status)))
+			dnsResolutions := overall.DNS.Resolution
+			for i, j := 0, 1; i < len(dnsResolutions)-1; i, j = i+2, j+1 {
+				lookupAns := fmt.Sprintf("-> %s", dnsResolutions[i+1])
+				fmt.Fprintf(&b, kvFormat5, keyColor(fmt.Sprintf("Lookup#%d", j)), valColor(dnsResolutions[i]), valColor(lookupAns))
+			}
 		}
 	case "error":
 		fmt.Fprintf(&b, kvFormat2, keyColor("DNS"), errColor(upper(overall.DNS.Status)))

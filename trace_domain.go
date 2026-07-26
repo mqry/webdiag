@@ -8,6 +8,7 @@ import (
 func traceDomain(domain string) []string {
 	var chain []string
 	current := domain
+	chain = append(chain, current)
 
 	for i := 0; i < 10; i++ {
 		if ip := net.ParseIP(current); ip != nil {
