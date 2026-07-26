@@ -59,6 +59,10 @@ func printVerbose(allRedirects []Response, isColor bool) string {
 		fmt.Fprintf(&b, kvFormat, keyColor("Status"), dnsStatusColorFunc(upper(redirect.DNS.Status)))
 		fmt.Fprintf(&b, kvFormat, keyColor("Hostname"), valColor(redirect.Site.Hostname))
 		fmt.Fprintf(&b, kvFormat, keyColor("IP"), valColor(redirect.Site.IP))
+		for num, resolution := range redirect.DNS.Resolution {
+			lookupStr := fmt.Sprintf("Lookup#%d", num)
+			fmt.Fprintf(&b, kvFormat, keyColor(lookupStr), valColor(resolution))
+		}
 		fmt.Fprintf(&b, kvFormat, keyColor("ERROR"), errColor(redirect.DNS.ErrorDns))
 		fmt.Fprint(&b, "\n")
 

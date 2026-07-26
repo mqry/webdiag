@@ -1,17 +1,3 @@
-// package main
-
-// import (
-// 	"net"
-// )
-
-// func traceDomain(url string) string {
-// 	if cname, err := net.LookupCNAME(url); err != nil {
-// 		return ""
-// 	} else {
-// 		return cname
-// 	}
-// }
-
 package main
 
 import (

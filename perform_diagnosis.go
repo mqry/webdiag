@@ -47,9 +47,11 @@ func performDiagnosis(initialURL string) DiagnosticResult {
 	totalTimingsTotalStatus = evaluateTiming("totalTimings", totalTimingsTotalDuration)
 
 	// Collect Aggregate Info & Message
+	var dnsResolutions []string
 	var redirectInfo []RedirectInfo
 	var redirectMessages []RedirectMessage
 	for _, redirect := range allRedirects {
+		dnsResolutions = append(dnsResolutions, redirect.DNS.Resolution...)
 		redirectInfo = append(redirectInfo, RedirectInfo{
 			URL:        redirect.Site.URL,
 			RedirectTo: redirect.Http.RedirectUrl,
@@ -91,7 +93,8 @@ func performDiagnosis(initialURL string) DiagnosticResult {
 			IP:       lastResult.Site.IP,
 		},
 		DNS: Dns{
-			Status: lastResult.DNS.Status,
+			Status:     lastResult.DNS.Status,
+			Resolution: dnsResolutions,
 		},
 		TCP: Tcp{
 			Status: lastResult.TCP.Status,

@@ -57,8 +57,9 @@ type Site struct {
 }
 
 type Dns struct {
-	Status   string `json:"status"`
-	ErrorDns string `json:"error"`
+	Status     string   `json:"status"`
+	Resolution []string `json:"resolution"`
+	ErrorDns   string   `json:"error"`
 }
 
 type Tcp struct {

@@ -391,8 +391,9 @@ func diagnoseSite(targetURL string) Response {
 			IP:       remoteIP,
 		},
 		DNS: Dns{
-			Status:   dnsStatus,
-			ErrorDns: errDnsMsg,
+			Status:     dnsStatus,
+			Resolution: traceDomain(hostname),
+			ErrorDns:   errDnsMsg,
 		},
 		TCP: Tcp{
 			Status:    tcpStatus,
