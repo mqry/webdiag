@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/fatih/color"
@@ -68,9 +69,16 @@ func printDefault(overall Overall, isColor bool) string {
 		} else {
 			fmt.Fprintf(&b, kvFormat2, keyColor("DNS"), valColor(upper(overall.DNS.Status)))
 			dnsResolutions := overall.DNS.Resolution
-			for i, j := 0, 1; i < len(dnsResolutions)-1; i, j = i+2, j+1 {
+			i, j := 0, 1
+			for i < len(dnsResolutions)-1 {
 				lookupAns := fmt.Sprintf("-> %s", dnsResolutions[i+1])
-				fmt.Fprintf(&b, kvFormat5, keyColor(fmt.Sprintf("Lookup#%d", j)), valColor(dnsResolutions[i]), valColor(lookupAns))
+				if ip := net.ParseIP(dnsResolutions[i+1]); ip != nil {
+					fmt.Fprintf(&b, kvFormat5, keyColor(fmt.Sprintf("Lookup#%d", j)), valColor(dnsResolutions[i]), valColor(lookupAns))
+					i, j = i+2, j+1
+				} else {
+					fmt.Fprintf(&b, kvFormat5, keyColor(fmt.Sprintf("Lookup#%d", j)), valColor(dnsResolutions[i]), valColor(lookupAns))
+					i, j = i+1, j+1
+				}
 			}
 		}
 	case "error":
