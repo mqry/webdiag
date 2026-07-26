@@ -120,9 +120,6 @@ func printDefault(overall Overall, isColor bool) string {
 					fmt.Fprintf(&b, kvFormat5, keyColor(fmt.Sprintf("Redirect#%d", num+1)), valColor(redirectHop), valColor(redirect.RedirectTo))
 					continue
 				}
-
-				finalHop := fmt.Sprintf("%d =>", redirect.StatusCode)
-				fmt.Fprintf(&b, kvFormat5, keyColor("Final"), valColor(finalHop), valColor(redirect.URL))
 			}
 		} else {
 			fmt.Fprintf(&b, kvFormat3, keyColor("Redirect"), valColor("None"))
