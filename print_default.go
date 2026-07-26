@@ -108,9 +108,9 @@ func printDefault(overall Overall, isColor bool) string {
 	}
 
 	// HTTP
+	statusCodeStr := fmt.Sprintf("(%s)", str(overall.Http.StatusCode))
 	switch overall.Http.Status {
 	case "ok":
-		statusCodeStr := fmt.Sprintf("(%s)", str(overall.Http.StatusCode))
 		fmt.Fprintf(&b, kvFormat1, keyColor("HTTP"), valColor(upper(overall.Http.Status)), valColor(statusCodeStr))
 		fmt.Fprintf(&b, kvFormat3, keyColor("Version"), valColor(upper(overall.Http.Version)))
 		if len(overall.Redirects.RedirectsInfo) > 1 {
@@ -128,7 +128,7 @@ func printDefault(overall Overall, isColor bool) string {
 			fmt.Fprintf(&b, kvFormat3, keyColor("Redirect"), valColor("None"))
 		}
 	case "error":
-		fmt.Fprintf(&b, kvFormat2, keyColor("HTTP"), errColor(upper(overall.Http.Status)))
+		fmt.Fprintf(&b, kvFormat1, keyColor("HTTP"), errColor(upper(overall.Http.Status)), errColor(statusCodeStr))
 		fmt.Fprintf(&b, kvFormat3, keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorHttp))
 	}
 

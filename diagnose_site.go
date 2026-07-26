@@ -323,6 +323,10 @@ func diagnoseSite(targetURL string) Response {
 			http3Supported = "no"
 		}
 
+		if resp.StatusCode >= 400 && resp.StatusCode < 600 {
+			errHttpMsg = http.StatusText(resp.StatusCode)
+		}
+
 		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
 			if loc, err := resp.Location(); err == nil {
 				redirectLocation = loc.String()
