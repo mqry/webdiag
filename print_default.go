@@ -52,6 +52,9 @@ func printDefault(overall Overall, isColor bool) string {
 	timingsTotalDurationStr := fmt.Sprintf("%d ms", overall.TimingsMs.Total.Duration)
 
 	ipStr := fmt.Sprintf("(%s)", overall.Site.IP)
+	cnameResult := traceDomain(overall.Site.Hostname)
+	cnameChain := strings.Join(cnameResult, " => ")
+	cnameStr := fmt.Sprintf("(%s)", cnameChain)
 	portStr := fmt.Sprintf("(%s port)", overall.TCP.Port)
 	daysStr := fmt.Sprintf("(%d days)", overall.Certificate.DaysRemaining)
 
@@ -63,7 +66,11 @@ func printDefault(overall Overall, isColor bool) string {
 	// DNS
 	switch overall.DNS.Status {
 	case "ok":
-		fmt.Fprintf(&b, kvFormat1, keyColor("DNS"), valColor(upper(overall.DNS.Status)), valColor(ipStr))
+		if len(cnameResult) == 0 {
+			fmt.Fprintf(&b, kvFormat1, keyColor("DNS"), valColor(upper(overall.DNS.Status)), valColor(ipStr))
+		} else {
+			fmt.Fprintf(&b, kvFormat1, keyColor("DNS"), valColor(upper(overall.DNS.Status)), valColor(cnameStr))
+		}
 	case "error":
 		fmt.Fprintf(&b, kvFormat2, keyColor("DNS"), errColor(upper(overall.DNS.Status)))
 		fmt.Fprintf(&b, kvFormat3, keyColor("Reason"), errColor(overall.Message.PerRedirect[len(overall.Message.PerRedirect)-1].OverallErrors.Error.ErrorDns))
