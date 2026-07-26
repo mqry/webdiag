@@ -110,15 +110,9 @@ func printDefault(overall Overall, isColor bool) string {
 	// HTTP
 	switch overall.Http.Status {
 	case "ok":
-		var statusCodeStr string
-		if isColor {
-			statusCodeStr = fmt.Sprintf("%d", overall.Http.StatusCode)
-		} else {
-			statusCodeStr = str(overall.Http.StatusCode)
-		}
-		fmt.Fprintf(&b, kvFormat2, keyColor("HTTP"), valColor(upper(overall.Http.Status)))
+		statusCodeStr := fmt.Sprintf("(%s)", str(overall.Http.StatusCode))
+		fmt.Fprintf(&b, kvFormat1, keyColor("HTTP"), valColor(upper(overall.Http.Status)), valColor(statusCodeStr))
 		fmt.Fprintf(&b, kvFormat3, keyColor("Version"), valColor(upper(overall.Http.Version)))
-		fmt.Fprintf(&b, kvFormat3, keyColor("Status"), valColor(statusCodeStr))
 		if len(overall.Redirects.RedirectsInfo) > 1 {
 			for num, redirect := range overall.Redirects.RedirectsInfo {
 				if redirect.RedirectTo != "" {
