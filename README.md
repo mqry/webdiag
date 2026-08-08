@@ -105,25 +105,7 @@ webdiag --json example.com | jq '.overall.certificate'
 
 Displays a compact, color-coded overview of the final destination after all redirects, including overall timing scores.
 
-```
-URL            https://example.com
-DNS            OK
- Lookup#1      example.com -> 104.20.23.154
-TCP            OK (443 port)
-TLS            OK
- Version       1.3
- Cipher        TLS_AES_128_GCM_SHA256
- Certificate   OK (89 days)
-HTTP           OK (200)
- Version       HTTP/2.0
- Redirect      None
-Timings
- DNS           23 ms (OK)
- TCP           10 ms (GOOD)
- TLS         1220 ms (BAD)
- TTFB          15 ms (GOOD)
- Total       1270 ms
-```
+![webdiag demo](demo.gif)
 
 ### Verbose (`--verbose`)
 
