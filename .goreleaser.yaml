@@ -50,6 +50,16 @@ changelog:
       - "^docs:"
       - "^test:"
 
+brews:
+  - name: webdiag
+    tap:
+      owner: mqry
+      name: homebrew-tap
+    homepage: https://github.com/mqry/webdiag
+    description: A fast, lightweight CLI tool for diagnosing websites
+    license: MIT
+    skip_upload: false
+
 release:
   footer: >-
 
