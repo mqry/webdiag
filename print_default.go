@@ -71,12 +71,12 @@ func printDefault(overall Overall, isColor bool) string {
 			dnsResolutions := overall.DNS.Resolution
 			i, j := 0, 1
 			for i < len(dnsResolutions)-1 {
-				lookupAns := fmt.Sprintf("-> %s", dnsResolutions[i+1])
+				lookupAns := fmt.Sprintf("%s", dnsResolutions[i+1])
 				if ip := net.ParseIP(dnsResolutions[i+1]); ip != nil {
-					fmt.Fprintf(&b, kvFormat5, keyColor(fmt.Sprintf("Lookup#%d", j)), valColor(dnsResolutions[i]), valColor(lookupAns))
+					fmt.Fprintf(&b, kvFormat3, keyColor(fmt.Sprintf("Answer#%d", j)), valColor(lookupAns))
 					i, j = i+2, j+1
 				} else {
-					fmt.Fprintf(&b, kvFormat5, keyColor(fmt.Sprintf("Lookup#%d", j)), valColor(dnsResolutions[i]), valColor(lookupAns))
+					fmt.Fprintf(&b, kvFormat3, keyColor(fmt.Sprintf("Answer#%d", j)), valColor(lookupAns))
 					i, j = i+1, j+1
 				}
 			}
